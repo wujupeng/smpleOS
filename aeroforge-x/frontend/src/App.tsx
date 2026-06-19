@@ -65,6 +65,11 @@ import AircraftObjectDetail from './modules/aircraft-core/AircraftObjectDetail'
 import WorkflowEditor from './modules/workflow/WorkflowEditor'
 import WorkflowTemplateGallery from './modules/workflow/WorkflowTemplateGallery'
 import TwinRuntimeDashboard from './modules/physics-twin/TwinRuntimeDashboard'
+import ConfigurationManagerPage from './modules/v6/ConfigurationManagerPage'
+import RequirementsTraceabilityPage from './modules/v6/RequirementsTraceabilityPage'
+import CertificationDashboardPage from './modules/v6/CertificationDashboardPage'
+import FleetHealthDashboardPage from './modules/v6/FleetHealthDashboardPage'
+import ProductionDashboardPage from './modules/v6/ProductionDashboardPage'
 
 const SchemaEditor = lazy(() => import('./modules/aircraft-core/schemas/SchemaEditor'))
 const SchemaVersionManager = lazy(() => import('./modules/aircraft-core/schemas/SchemaVersionManager'))
@@ -185,6 +190,11 @@ function App() {
         <Route path="physics-twin/simulations/battery" element={<LazyLoad><BatterySOCCurve /></LazyLoad>} />
         <Route path="physics-twin/simulations/control" element={<LazyLoad><ControlResponseCurve /></LazyLoad>} />
         <Route path="physics-twin/runtimes/coupled" element={<LazyLoad><CoupledSimulationDashboard /></LazyLoad>} />
+        <Route path="v6/config" element={<ConfigurationManagerPage />} />
+        <Route path="v6/traceability" element={<RequirementsTraceabilityPage />} />
+        <Route path="v6/certification" element={<CertificationDashboardPage />} />
+        <Route path="v6/fleet-health" element={<FleetHealthDashboardPage />} />
+        <Route path="v6/production" element={<ProductionDashboardPage />} />
       </Route>
     </Routes>
   )

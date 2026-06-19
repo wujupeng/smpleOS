@@ -88,6 +88,18 @@ const ALL_MENU_ITEMS = [
       { key: '/workflow/propagation/audit', label: 'Audit Log' },
     ],
   },
+  {
+    key: 'v6-programs',
+    icon: <RocketOutlined />,
+    label: 'V6 Programs',
+    children: [
+      { key: '/v6/config', label: 'Configuration Manager' },
+      { key: '/v6/traceability', label: 'Requirements Traceability' },
+      { key: '/v6/certification', label: 'Certification Dashboard' },
+      { key: '/v6/fleet-health', label: 'Fleet Health' },
+      { key: '/v6/production', label: 'Production Dashboard' },
+    ],
+  },
 ]
 
 export default function MainLayout() {
