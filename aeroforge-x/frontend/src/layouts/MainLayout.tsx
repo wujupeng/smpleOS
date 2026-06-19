@@ -30,6 +30,7 @@ import { changeLocale, getCurrentLocale } from '../locales'
 import { useIsMobile } from '../hooks/useBreakpoint'
 import MobileTabNav from '../components/MobileTabNav'
 import { OfflineBanner } from '../components/OfflineBanner'
+import { isDemoMode } from '../config/appMode'
 
 const { Header, Sider, Content } = Layout
 
@@ -175,6 +176,11 @@ export default function MainLayout() {
       <Header style={{ display: 'flex', alignItems: 'center', background: '#001529' }}>
         <div style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', marginRight: 40 }}>
           AeroForge-X
+          {isDemoMode() && (
+            <span style={{ marginLeft: 8, fontSize: 11, background: '#faad14', color: '#000', padding: '2px 8px', borderRadius: 4, fontWeight: 'bold' }}>
+              DEMO MODE
+            </span>
+          )}
         </div>
         <Space>
           <Select

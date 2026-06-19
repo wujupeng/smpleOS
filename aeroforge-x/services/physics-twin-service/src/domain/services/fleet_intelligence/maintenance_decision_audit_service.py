@@ -111,7 +111,6 @@ class MaintenanceDecisionAuditService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._entries: dict[str, DecisionAuditEntry] = {}
         self._component_index: dict[str, list[str]] = {}
 

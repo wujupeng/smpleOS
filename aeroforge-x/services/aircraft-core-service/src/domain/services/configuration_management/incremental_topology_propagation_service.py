@@ -94,7 +94,6 @@ class IncrementalTopologyPropagationService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._nodes: dict[str, BOMNode] = {}
         self._edges: list[BOMEdge] = []
         self._adjacency: dict[str, list[str]] = {}

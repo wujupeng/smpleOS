@@ -78,7 +78,6 @@ class ShopFloorEventEmitterService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._events: list[ShopFloorEvent] = []
 
     def _emit_event(

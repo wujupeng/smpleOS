@@ -100,7 +100,6 @@ class ProductionDashboardService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._oee_data: dict[str, EquipmentOEE] = {}
         self._agv_data: dict[str, AGVDetail] = {}
         self._operation_utilization: dict[str, float] = {}

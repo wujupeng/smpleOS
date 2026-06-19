@@ -141,7 +141,6 @@ class PHMModelConfidenceService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._predictions: dict[str, RULPredictionWithConfidence] = {}
         self._audits: dict[str, MaintenanceDecisionAudit] = {}
         self._reviews: list[LowConfidenceReview] = []

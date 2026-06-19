@@ -178,7 +178,6 @@ class SevenDisciplineMDOService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._solvers: dict[str, IDisciplineSolver7D] = {}
         self._runs: dict[str, dict] = {}
 

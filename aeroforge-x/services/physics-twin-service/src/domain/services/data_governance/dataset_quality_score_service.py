@@ -55,7 +55,6 @@ class DatasetQualityScoreService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._assessments: dict[str, list[DatasetQualityAssessment]] = {}
         self._alerts: list[dict] = []
 

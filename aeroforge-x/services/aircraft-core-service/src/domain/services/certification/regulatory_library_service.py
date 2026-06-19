@@ -101,7 +101,6 @@ class RegulatoryLibraryService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._libraries: dict[str, RegulatoryLibrary] = {}
 
     def importRegulation(

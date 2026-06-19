@@ -153,7 +153,6 @@ class SupplierCARService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._issues: dict[str, SupplierQualityIssue] = {}
         self._cars: dict[str, CorrectiveActionRequest] = {}
 

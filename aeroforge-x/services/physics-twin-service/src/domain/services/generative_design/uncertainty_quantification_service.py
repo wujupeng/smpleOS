@@ -241,7 +241,6 @@ class UncertaintyQuantificationService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._methods: dict[str, IUQMethod] = {}
         self._specs: dict[str, UQMethodSpec] = {}
         self._active_method_id: str = ""

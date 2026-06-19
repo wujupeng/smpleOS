@@ -85,7 +85,6 @@ class ProcessPlanGeneratorService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._plans: dict[str, ProcessPlan] = {}
 
     def generate_process_plan(

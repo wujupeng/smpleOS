@@ -62,7 +62,6 @@ class DesignFeedbackService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._trends: dict[str, PerformanceTrend] = {}
         self._tickets: dict[str, DesignFeedbackTicket] = {}
 

@@ -73,7 +73,6 @@ class ComplianceChecklistService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._checklists: dict[str, ComplianceChecklist] = {}
 
     def generateChecklist(

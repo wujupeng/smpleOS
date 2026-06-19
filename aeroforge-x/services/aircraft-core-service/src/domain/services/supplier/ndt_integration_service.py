@@ -106,7 +106,6 @@ class NDTIntegrationService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._records: dict[str, NDTRecord] = {}
         self._conditional_reviews: dict[str, dict] = {}
 

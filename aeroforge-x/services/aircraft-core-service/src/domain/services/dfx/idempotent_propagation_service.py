@@ -104,7 +104,6 @@ class IdempotentPropagationService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._records: dict[str, IdempotencyRecord] = {}
         self._locks: dict[str, OptimisticLock] = {}
         self._dashboards: dict[str, DashboardState] = {}

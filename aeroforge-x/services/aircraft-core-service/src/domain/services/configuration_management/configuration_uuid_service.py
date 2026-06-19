@@ -16,13 +16,15 @@ from __future__ import annotations
 
 import threading
 import time
+import uuid as uuid_mod
 from dataclasses import dataclass, field
 from typing import Optional
 
 
 @dataclass
 class ConfigurationIdentity:
-    config_uuid: str
+    id: str
+    business_code: str
     aircraft_type: str
     block_id: str
     origin: str
@@ -32,7 +34,8 @@ class ConfigurationIdentity:
 
     def to_dict(self) -> dict:
         return {
-            "config_uuid": self.config_uuid,
+            "id": self.id,
+            "business_code": self.business_code,
             "aircraft_type": self.aircraft_type,
             "block_id": self.block_id,
             "origin": self.origin,
@@ -59,9 +62,10 @@ class ConfigurationUUIDGenerator:
     def generate(self, aircraft_type: str = "", block_id: str = "", origin: str = "", parent_uuid: str = None) -> ConfigurationIdentity:
         self._counter += 1
         seq = f"{self._counter:06d}"
-        config_uuid = f"CFG-{self._year}-{seq}"
+        business_code = f"CFG-{self._year}-{seq}"
         return ConfigurationIdentity(
-            config_uuid=config_uuid,
+            id=str(uuid_mod.uuid4()),
+            business_code=business_code,
             aircraft_type=aircraft_type,
             block_id=block_id,
             origin=origin,
@@ -69,8 +73,8 @@ class ConfigurationUUIDGenerator:
         )
 
     @staticmethod
-    def validate(config_uuid: str) -> bool:
-        parts = config_uuid.split("-")
+    def validate(business_code: str) -> bool:
+        parts = business_code.split("-")
         if len(parts) != 3:
             return False
         if parts[0] != "CFG":
@@ -82,8 +86,8 @@ class ConfigurationUUIDGenerator:
         return True
 
     @staticmethod
-    def derive_child(parent_uuid: str, origin: str) -> str:
-        return f"{parent_uuid}:{origin}"
+    def derive_child(parent_business_code: str, origin: str) -> str:
+        return f"{parent_business_code}:{origin}"
 
 
 CONFIG_UUID_GENERATOR = ConfigurationUUIDGenerator()

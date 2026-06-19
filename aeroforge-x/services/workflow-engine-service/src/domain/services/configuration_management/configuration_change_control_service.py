@@ -135,7 +135,6 @@ class ConfigurationChangeControlService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._requests: dict[str, ConfigurationChangeRequest] = {}
         self._impact_analyses: dict[str, ImpactAnalysisResult] = {}
         self._approvals: dict[str, ChangeApproval] = {}

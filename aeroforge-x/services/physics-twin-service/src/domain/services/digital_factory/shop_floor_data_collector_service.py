@@ -153,7 +153,6 @@ class ShopFloorDataCollectorService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._equipment: dict[str, EquipmentRegistration] = {}
         self._last_known_good: dict[str, float] = {}
         self._circuit_breakers: dict[str, CircuitBreaker] = {}

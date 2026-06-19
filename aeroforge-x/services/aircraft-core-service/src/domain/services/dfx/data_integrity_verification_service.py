@@ -104,7 +104,6 @@ class DataIntegrityVerificationService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._checksums: dict[str, ChecksumRecord] = {}
         self._reports: dict[str, IntegrityReport] = {}
         self._locked_evidence: set[str] = set()

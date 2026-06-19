@@ -140,7 +140,6 @@ class ThreeViewConfigPropagationService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._mfg_rules: list[ManufacturingRule] = []
         self._op_rules: list[OperationalRule] = []
         self._propagation_log: list[PropagationResult] = []

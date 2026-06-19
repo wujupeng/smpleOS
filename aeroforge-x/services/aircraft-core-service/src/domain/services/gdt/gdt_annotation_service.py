@@ -164,7 +164,6 @@ class GDTAnnotationService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._annotations: dict[str, GDTAnnotation] = {}
         self._datums: dict[str, list[DatumDefinition]] = {}
         self._chains: dict[str, ToleranceChainDefinition] = {}

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { isDemoMode } from '../config/appMode'
 
 const v6Client = axios.create({
   baseURL: '/api/v6',
@@ -13,6 +14,8 @@ v6Client.interceptors.response.use(
     return Promise.reject(err)
   }
 )
+
+export const DEMO_MODE = isDemoMode()
 
 export const configApi = {
   listBlocks: () => v6Client.get('/aircraft-core/config/blocks'),

@@ -155,6 +155,70 @@ class ExecutionResult:
         }
 
 
+class VerificationOutcome(str, Enum):
+    VERIFIED = "Verified"
+    CONDITIONAL = "Conditional"
+    FAILED = "Failed"
+
+
+@dataclass
+class ExecutionVerification:
+    verification_id: str
+    execution_id: str
+    component_id: str
+    verification_method: str
+    acceptance_criteria: str
+    measured_result: str
+    outcome: VerificationOutcome
+    verified_by: str
+    verified_at: str = ""
+    findings: str = ""
+
+    def to_dict(self) -> dict:
+        return {
+            "verification_id": self.verification_id,
+            "execution_id": self.execution_id,
+            "component_id": self.component_id,
+            "verification_method": self.verification_method,
+            "acceptance_criteria": self.acceptance_criteria,
+            "measured_result": self.measured_result,
+            "outcome": self.outcome.value,
+            "verified_by": self.verified_by,
+            "verified_at": self.verified_at,
+            "findings": self.findings,
+        }
+
+
+@dataclass
+class KnowledgeCaptureEntry:
+    entry_id: str
+    execution_id: str
+    verification_id: str
+    component_id: str
+    failure_mode: str
+    root_cause: str
+    corrective_action_taken: str
+    lessons_learned: str
+    applicability: list[str] = field(default_factory=list)
+    captured_by: str = ""
+    captured_at: str = ""
+
+    def to_dict(self) -> dict:
+        return {
+            "entry_id": self.entry_id,
+            "execution_id": self.execution_id,
+            "verification_id": self.verification_id,
+            "component_id": self.component_id,
+            "failure_mode": self.failure_mode,
+            "root_cause": self.root_cause,
+            "corrective_action_taken": self.corrective_action_taken,
+            "lessons_learned": self.lessons_learned,
+            "applicability": self.applicability,
+            "captured_by": self.captured_by,
+            "captured_at": self.captured_at,
+        }
+
+
 @dataclass
 class ModelCorrection:
     correction_id: str
@@ -190,6 +254,8 @@ class PHMClosedLoopActionService:
         self._schedules: dict[str, ResourceSchedule] = {}
         self._executions: dict[str, ExecutionResult] = {}
         self._corrections: dict[str, ModelCorrection] = {}
+        self._verifications: dict[str, ExecutionVerification] = {}
+        self._knowledge_entries: dict[str, KnowledgeCaptureEntry] = {}
         self._technician_bays: dict[str, list[str]] = {}
         self._bay_availability: dict[str, bool] = {}
 
@@ -342,6 +408,67 @@ class PHMClosedLoopActionService:
         self._corrections[correction.correction_id] = correction
         return correction
 
+    def verifyExecution(
+        self,
+        execution_id: str,
+        method: str,
+        criteria: str,
+        measured_result: str,
+        verified_by: str,
+        findings: str = "",
+    ) -> ExecutionVerification:
+        if execution_id not in self._executions:
+            raise ValueError(f"Execution not found: {execution_id}")
+
+        execution = self._executions[execution_id]
+        if "pass" in measured_result.lower() or "within" in measured_result.lower():
+            outcome = VerificationOutcome.VERIFIED
+        elif "conditional" in measured_result.lower():
+            outcome = VerificationOutcome.CONDITIONAL
+        else:
+            outcome = VerificationOutcome.FAILED
+
+        verification = ExecutionVerification(
+            verification_id=f"VER-{uuid.uuid4().hex[:8]}",
+            execution_id=execution_id,
+            component_id=execution.component_id,
+            verification_method=method,
+            acceptance_criteria=criteria,
+            measured_result=measured_result,
+            outcome=outcome,
+            verified_by=verified_by,
+            findings=findings,
+        )
+        self._verifications[verification.verification_id] = verification
+        return verification
+
+    def captureKnowledge(
+        self,
+        execution_id: str,
+        verification_id: str,
+        component_id: str,
+        failure_mode: str,
+        root_cause: str,
+        corrective_action: str,
+        lessons_learned: str,
+        applicability: list[str] = None,
+        captured_by: str = "",
+    ) -> KnowledgeCaptureEntry:
+        entry = KnowledgeCaptureEntry(
+            entry_id=f"KC-{uuid.uuid4().hex[:8]}",
+            execution_id=execution_id,
+            verification_id=verification_id,
+            component_id=component_id,
+            failure_mode=failure_mode,
+            root_cause=root_cause,
+            corrective_action_taken=corrective_action,
+            lessons_learned=lessons_learned,
+            applicability=applicability or [],
+            captured_by=captured_by,
+        )
+        self._knowledge_entries[entry.entry_id] = entry
+        return entry
+
     def getClosedLoopStatus(self, prediction_id: str) -> dict:
         suggestion = None
         for s in self._suggestions.values():
@@ -370,19 +497,35 @@ class PHMClosedLoopActionService:
                 correction = c
                 break
 
+        verification = None
+        if execution:
+            for v in self._verifications.values():
+                if v.execution_id == execution.execution_id:
+                    verification = v
+                    break
+
+        knowledge = None
+        if verification:
+            for k in self._knowledge_entries.values():
+                if k.verification_id == verification.verification_id:
+                    knowledge = k
+                    break
+
         stages = {
             "prediction": True,
             "suggestion": suggestion is not None,
             "work_order": order is not None,
             "scheduled": order is not None and order.status in (WorkOrderStatus.SCHEDULED, WorkOrderStatus.IN_PROGRESS, WorkOrderStatus.COMPLETED),
             "executed": execution is not None,
+            "verified": verification is not None,
+            "knowledge_captured": knowledge is not None,
             "model_corrected": correction is not None,
         }
 
         completed = sum(1 for v in stages.values() if v)
         return {
             "prediction_id": prediction_id,
-            "loop_status": "Closed" if correction is not None else "Open",
+            "loop_status": "Closed" if knowledge is not None and correction is not None else "Open",
             "completion_percentage": round(completed / len(stages) * 100, 1),
             "stages": stages,
         }

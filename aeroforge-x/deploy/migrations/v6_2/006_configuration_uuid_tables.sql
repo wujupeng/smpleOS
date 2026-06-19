@@ -5,25 +5,25 @@
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS configuration_identities (
-    config_uuid        VARCHAR(32) PRIMARY KEY,
-    aircraft_type      VARCHAR(64) NOT NULL,
-    block_id           VARCHAR(64) NOT NULL,
-    origin             VARCHAR(64) NOT NULL,
-    parent_config_uuid VARCHAR(32),
-    status             VARCHAR(16) NOT NULL DEFAULT 'Active',
-    created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_config_uuid_format CHECK (config_uuid ~ '^CFG-\d{4}-\d{6}$'),
+    id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    business_code     VARCHAR(32) NOT NULL UNIQUE,
+    aircraft_type     VARCHAR(64) NOT NULL,
+    block_id          VARCHAR(64) NOT NULL,
+    origin            VARCHAR(64) NOT NULL,
+    parent_id         UUID REFERENCES configuration_identities(id),
+    status            VARCHAR(16) NOT NULL DEFAULT 'Active',
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_business_code_format CHECK (business_code ~ '^CFG-\d{4}-\d{6}$'),
     CONSTRAINT chk_config_status CHECK (status IN ('Active','Superseded','Obsolete'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_ci_aircraft ON configuration_identities (aircraft_type, block_id);
-CREATE INDEX IF NOT EXISTS idx_ci_parent ON configuration_identities (parent_config_uuid);
+CREATE INDEX IF NOT EXISTS idx_ci_parent ON configuration_identities (parent_id);
 CREATE INDEX IF NOT EXISTS idx_ci_origin ON configuration_identities (origin, status);
 
--- Link configuration UUID to existing domain objects
 CREATE TABLE IF NOT EXISTS configuration_identity_links (
-    link_id            VARCHAR(64) PRIMARY KEY,
-    config_uuid        VARCHAR(32) NOT NULL REFERENCES configuration_identities(config_uuid),
+    link_id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    config_id          UUID NOT NULL REFERENCES configuration_identities(id),
     domain_object_type VARCHAR(32) NOT NULL,
     domain_object_id   VARCHAR(64) NOT NULL,
     linked_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS configuration_identity_links (
     ))
 );
 
-CREATE INDEX IF NOT EXISTS idx_cil_config ON configuration_identity_links (config_uuid);
+CREATE INDEX IF NOT EXISTS idx_cil_config ON configuration_identity_links (config_id);
 CREATE INDEX IF NOT EXISTS idx_cil_domain ON configuration_identity_links (domain_object_type, domain_object_id);
 
 COMMIT;

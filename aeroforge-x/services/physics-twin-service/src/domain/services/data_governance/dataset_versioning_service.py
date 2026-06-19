@@ -99,7 +99,6 @@ class DatasetVersioningService:
 
     def __init__(self, repo=None) -> None:
         self._repo = repo
-def __init__(self, repo=None) -> None:
         self._versions: dict[str, DatasetVersion] = {}
         self._links: dict[str, ModelDatasetLink] = {}
 
