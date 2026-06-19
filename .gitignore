@@ -1,43 +1,69 @@
-__pycache__/
-*.py[cod]
-*$py.class
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Linker files
+*.ilk
+
+# Debugger Files
+*.pdb
+
+# Compiled Dynamic libraries
 *.so
-*.egg-info/
-dist/
+*.dylib
+*.dll
+*.so.*
+
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Build directories
 build/
-.eggs/
-*.egg
+Build/
+build-*/
 
-.env
-.env.local
-.env.*.local
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+install_manifest.txt
+compile_commands.json
 
-.venv/
-venv/
-ENV/
-
-node_modules/
-.npm
-
-*.log
-logs/
-
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-htmlcov/
-.tox/
-
-*.swp
-*.swo
-*~
-.DS_Store
-Thumbs.db
-
-.idea/
-.vscode/
-*.iml
-
-*.bak
+# Temporary files
 *.tmp
+*.log
+*.bak
+*.swp
+
+# vcpkg
+vcpkg_installed/
+
+# debug information files
+*.dwo
+
+# test output & cache
+Testing/
+.cache/
