@@ -1,0 +1,48 @@
+global:
+  environment: dev
+
+designCenter:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  hpa:
+    enabled: false
+
+caeCenter:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  hpa:
+    enabled: false
+
+celeryWorker:
+  replicas: 1
+  concurrency: 2
+  hpa:
+    enabled: false
+
+config:
+  logLevel: DEBUG
+
+postgresql:
+  primary:
+    persistence:
+      size: 10Gi
+  readReplicas:
+    replicaCount: 0
+
+neo4j:
+  core:
+    numberOfServers: 1
+  readReplica:
+    numberOfServers: 0

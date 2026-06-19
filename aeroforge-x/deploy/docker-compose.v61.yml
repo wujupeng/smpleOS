@@ -1,0 +1,259 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: aeroforge-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-aeroforge}
+      POSTGRES_DB: aeroforge
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ../migrations/v6_0/001_physics_twin_v6_tables.sql:/docker-entrypoint-initdb.d/001_physics_twin_v6_tables.sql:ro
+      - ../migrations/v6_0/002_aircraft_core_v6_tables.sql:/docker-entrypoint-initdb.d/002_aircraft_core_v6_tables.sql:ro
+      - ../migrations/v6_1/004_v61_physics_twin_tables.sql:/docker-entrypoint-initdb.d/004_v61_physics_twin_tables.sql:ro
+      - ../migrations/v6_1/005_v61_aircraft_core_tables.sql:/docker-entrypoint-initdb.d/005_v61_aircraft_core_tables.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - aeroforge-net
+
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: aeroforge-timescaledb
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_PASSWORD: ${TS_PASSWORD:-aeroforge_ts}
+      POSTGRES_DB: aeroforge_ts
+    volumes:
+      - ts_data:/var/lib/postgresql/data
+      - ../migrations/v6_0/003_timescale_v6_tables.sql:/docker-entrypoint-initdb.d/003_timescale_v6_tables.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - aeroforge-net
+
+  neo4j:
+    image: neo4j:5
+    container_name: aeroforge-neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-aeroforge_neo4j}
+      NEO4J_PLUGINS: '["apoc"]'
+    volumes:
+      - neo4j_data:/data
+      - ../migrations/v6_0/neo4j:/var/lib/neo4j/import:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - aeroforge-net
+
+  nats:
+    image: nats:alpine
+    container_name: aeroforge-nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: --jetstream --store_dir /data
+    volumes:
+      - nats_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8222/healthz || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aeroforge-net
+
+  minio:
+    image: minio/minio:latest
+    container_name: aeroforge-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER:-aeroforge}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET:-aeroforge123}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aeroforge-net
+
+  init-nats:
+    image: python:3.12-slim
+    container_name: aeroforge-init-nats
+    environment:
+      NATS_URL: nats://nats:4222
+    depends_on:
+      nats:
+        condition: service_healthy
+    volumes:
+      - ../migrations/v6_0/nats:/migrations/v6_0/nats:ro
+      - ../migrations/v6_1:/migrations/v6_1:ro
+      - ../scripts/init_nats_streams.sh:/init_nats_streams.sh:ro
+    entrypoint: ["sh", "/init_nats_streams.sh"]
+    restart: "no"
+    networks:
+      - aeroforge-net
+
+  init-minio:
+    image: minio/mc:latest
+    container_name: aeroforge-init-minio
+    environment:
+      MINIO_ENDPOINT: minio:9000
+      MINIO_USER: ${MINIO_USER:-aeroforge}
+      MINIO_SECRET: ${MINIO_SECRET:-aeroforge123}
+    depends_on:
+      minio:
+        condition: service_healthy
+    volumes:
+      - ../scripts/init_minio_buckets.sh:/init_minio_buckets.sh:ro
+    entrypoint: ["sh", "/init_minio_buckets.sh"]
+    restart: "no"
+    networks:
+      - aeroforge-net
+
+  init-neo4j:
+    image: neo4j:5
+    container_name: aeroforge-init-neo4j
+    environment:
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-aeroforge_neo4j}
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    volumes:
+      - ../migrations/v6_0/neo4j:/migrations/v6_0/neo4j:ro
+      - ../scripts/init_neo4j_schema.sh:/init_neo4j_schema.sh:ro
+    entrypoint: ["sh", "/init_neo4j_schema.sh"]
+    restart: "no"
+    networks:
+      - aeroforge-net
+
+  aircraft-core-service:
+    build:
+      context: ../../services/aircraft-core-service
+      dockerfile: Dockerfile
+    container_name: aeroforge-aircraft-core
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgresql://postgres:${PG_PASSWORD:-aeroforge}@postgres:5432/aeroforge
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-aeroforge_neo4j}
+      NATS_URL: nats://nats:4222
+      ENCRYPTION_MASTER_KEY: ${ENCRYPTION_MASTER_KEY:-aeroforge-master-key-32bytes!!}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      init-nats:
+        condition: service_completed_successfully
+      init-neo4j:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/api/v6/aircraft-core/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - aeroforge-net
+
+  workflow-engine-service:
+    build:
+      context: ../../services/workflow-engine-service
+      dockerfile: Dockerfile
+    container_name: aeroforge-workflow-engine
+    ports:
+      - "8002:8002"
+    environment:
+      DATABASE_URL: postgresql://postgres:${PG_PASSWORD:-aeroforge}@postgres:5432/aeroforge
+      NATS_URL: nats://nats:4222
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      init-nats:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8002/api/v6/workflow-engine/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - aeroforge-net
+
+  physics-twin-service:
+    build:
+      context: ../../services/physics-twin-service
+      dockerfile: Dockerfile
+    container_name: aeroforge-physics-twin
+    ports:
+      - "8003:8003"
+    environment:
+      DATABASE_URL: postgresql://postgres:${PG_PASSWORD:-aeroforge}@postgres:5432/aeroforge
+      TIMESCALEDB_URL: postgresql://postgres:${TS_PASSWORD:-aeroforge_ts}@timescaledb:5432/aeroforge_ts
+      NATS_URL: nats://nats:4222
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_USER:-aeroforge}
+      MINIO_SECRET_KEY: ${MINIO_SECRET:-aeroforge123}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      timescaledb:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      init-nats:
+        condition: service_completed_successfully
+      init-minio:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8003/api/v6/physics-twin/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - aeroforge-net
+
+volumes:
+  pg_data:
+  ts_data:
+  neo4j_data:
+  nats_data:
+  minio_data:
+
+networks:
+  aeroforge-net:
+    driver: bridge

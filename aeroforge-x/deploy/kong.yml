@@ -1,0 +1,250 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: design-center
+    url: http://design-center:8000
+    routes:
+      - name: design-routes
+        paths:
+          - /api/v1/specs
+          - /api/v1/models
+          - /api/v1/rules
+          - /api/v1/design
+        strip_path: false
+    plugins:
+      - name: jwt
+        config:
+          uri_param_names:
+            - jwt
+          claims_to_verify:
+            - exp
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+
+  - name: cae-center
+    url: http://cae-center:8000
+    routes:
+      - name: cae-routes
+        paths:
+          - /api/v1/mesh
+          - /api/v1/cfd
+          - /api/v1/fea
+          - /api/v1/flutter
+          - /api/v1/thermal
+          - /api/v1/multiphysics
+          - /api/v1/cae
+        strip_path: false
+    plugins:
+      - name: jwt
+      - name: rate-limiting
+        config:
+          minute: 30
+          policy: local
+
+  - name: digital-twin-center
+    url: http://digital-twin-center:8000
+    routes:
+      - name: twin-routes
+        paths:
+          - /api/v1/twin
+        strip_path: false
+    plugins:
+      - name: jwt
+      - name: rate-limiting
+        config:
+          minute: 120
+          policy: local
+
+  - name: plm-center
+    url: http://plm-center:8000
+    routes:
+      - name: plm-routes
+        paths:
+          - /api/v1/plm
+          - /api/v1/baseline
+          - /api/v1/change
+          - /api/v1/impact
+        strip_path: false
+    plugins:
+      - name: jwt
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+
+  - name: bom-center
+    url: http://bom-center:8000
+    routes:
+      - name: bom-routes
+        paths:
+          - /api/v1/bom
+          - /api/v1/ebom
+          - /api/v1/mbom
+          - /api/v1/sbom
+        strip_path: false
+    plugins:
+      - name: jwt
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+
+  - name: mes-center
+    url: http://mes-center:8000
+    routes:
+      - name: mes-routes
+        paths:
+          - /api/v1/mes
+          - /api/v1/process-route
+        strip_path: false
+    plugins:
+      - name: jwt
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+
+  - name: qms-service
+    url: http://qms-service:8000
+    routes:
+      - name: qms-routes
+        paths:
+          - /api/v1/qms
+        strip_path: false
+    plugins:
+      - name: jwt
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+
+  - name: trace-service
+    url: http://trace-service:8000
+    routes:
+      - name: trace-routes
+        paths:
+          - /api/v1/trace
+        strip_path: false
+    plugins:
+      - name: jwt
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+
+  - name: supply-chain
+    url: http://supply-chain:8000
+    routes:
+      - name: supply-routes
+        paths:
+          - /api/v1/supply
+          - /api/v1/supplier
+          - /api/v1/purchase
+          - /api/v1/supply-v2
+        strip_path: false
+    plugins:
+      - name: jwt
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+
+  - name: delivery-center
+    url: http://delivery-center:8000
+    routes:
+      - name: delivery-routes
+        paths:
+          - /api/v1/delivery
+          - /api/v1/pipeline
+        strip_path: false
+    plugins:
+      - name: jwt
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+
+  - name: certification-center
+    url: http://certification-center:8000
+    routes:
+      - name: certification-routes
+        paths:
+          - /api/v1/certification
+          - /api/v1/airworthiness
+        strip_path: false
+    plugins:
+      - name: jwt
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+
+  - name: knowledge-center
+    url: http://knowledge-center:8000
+    routes:
+      - name: knowledge-routes
+        paths:
+          - /api/v1/knowledge
+          - /api/v1/decision
+        strip_path: false
+    plugins:
+      - name: jwt
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+
+  - name: platform-ecosystem
+    url: http://platform-ecosystem:8000
+    routes:
+      - name: ecosystem-routes
+        paths:
+          - /api/v1/ecosystem
+          - /api/v1/plugin
+          - /api/v1/multi-site
+        strip_path: false
+    plugins:
+      - name: jwt
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+
+  - name: data-lake
+    url: http://data-lake:8000
+    routes:
+      - name: data-lake-routes
+        paths:
+          - /api/v1/data-lake
+          - /api/v1/ai-training
+        strip_path: false
+    plugins:
+      - name: jwt
+      - name: rate-limiting
+        config:
+          minute: 30
+          policy: local
+
+  global_plugins:
+  - name: cors
+    config:
+      origins:
+        - "http://localhost:3000"
+      methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      headers:
+        - Authorization
+        - Content-Type
+      max_age: 3600
+
+  - name: request-termination
+    config:
+      status_code: 401
+      message: '{"code": 401, "message": "Authentication required"}'

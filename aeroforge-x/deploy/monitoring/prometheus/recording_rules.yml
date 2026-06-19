@@ -1,0 +1,24 @@
+groups:
+  - name: aeroforge_business_metrics
+    interval: 30s
+    rules:
+      - record: aeroforge:projects:total
+        expr: sum(aeroforge_projects_total) by (tenant_id)
+
+      - record: aeroforge:work_orders:active
+        expr: sum(aeroforge_work_orders_active) by (tenant_id, project_id)
+
+      - record: aeroforge:cae_tasks:queue_length
+        expr: sum(aeroforge_cae_tasks_queued) by (service, task_type)
+
+      - record: aeroforge:spc:out_of_control_points
+        expr: sum(aeroforge_spc_out_of_control) by (chart_id, tenant_id)
+
+      - record: aeroforge:inventory:below_safety_stock
+        expr: sum(aeroforge_inventory_below_safety) by (warehouse, tenant_id)
+
+      - record: aeroforge:request_rate:5m
+        expr: sum(rate(http_requests_total[5m])) by (service, method, status_code)
+
+      - record: aeroforge:request_latency:p99:5m
+        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (service, le))

@@ -1,0 +1,241 @@
+global:
+  environment: production
+  domain: aeroforge-x.example.com
+  imageRegistry: registry.example.com/aeroforge-x
+  imagePullSecrets: []
+  tenantId: default
+
+designCenter:
+  enabled: true
+  replicas: 2
+  image:
+    repository: design-center
+    tag: "0.3.0"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  service:
+    type: ClusterIP
+    port: 8000
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilization: 70
+
+caeCenter:
+  enabled: true
+  replicas: 2
+  image:
+    repository: cae-center
+    tag: "0.3.0"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+  service:
+    type: ClusterIP
+    port: 8001
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilization: 60
+
+mesCenter:
+  enabled: true
+  replicas: 2
+  image:
+    repository: mes-center
+    tag: "0.3.0"
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  service:
+    type: ClusterIP
+    port: 8002
+
+digitalTwinCenter:
+  enabled: true
+  replicas: 2
+  image:
+    repository: digital-twin-center
+    tag: "0.3.0"
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  service:
+    type: ClusterIP
+    port: 8003
+
+aiEngine:
+  enabled: true
+  replicas: 2
+  image:
+    repository: ai-engine
+    tag: "0.3.0"
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+    nvidia.com/gpu: 0
+  service:
+    type: ClusterIP
+    port: 8004
+
+celeryWorker:
+  enabled: true
+  replicas: 3
+  image:
+    repository: celery-worker
+    tag: "0.3.0"
+  resources:
+    requests:
+      cpu: "1"
+      memory: 2Gi
+    limits:
+      cpu: "4"
+      memory: 8Gi
+  concurrency: 4
+  queues: "cfd,fea,flutter,thermal,multiphysics"
+  hpa:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilization: 70
+
+qmsService:
+  enabled: true
+  replicas: 2
+  image:
+    repository: qms-service
+    tag: "0.3.0"
+  service:
+    type: ClusterIP
+    port: 8005
+
+supplyChain:
+  enabled: true
+  replicas: 2
+  image:
+    repository: supply-chain
+    tag: "0.3.0"
+  service:
+    type: ClusterIP
+    port: 8006
+
+analytics:
+  enabled: true
+  replicas: 2
+  image:
+    repository: analytics
+    tag: "0.3.0"
+  service:
+    type: ClusterIP
+    port: 8007
+
+tenantService:
+  enabled: true
+  replicas: 2
+  image:
+    repository: tenant-service
+    tag: "0.3.0"
+  service:
+    type: ClusterIP
+    port: 8008
+
+frontend:
+  enabled: true
+  replicas: 2
+  image:
+    repository: frontend
+    tag: "0.3.0"
+  service:
+    type: ClusterIP
+    port: 80
+
+ingress:
+  enabled: true
+  className: nginx
+  tls: true
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+
+postgresql:
+  enabled: true
+  auth:
+    username: aeroforge
+    database: aeroforge_x
+  primary:
+    persistence:
+      enabled: true
+      size: 50Gi
+  readReplicas:
+    replicaCount: 2
+
+neo4j:
+  enabled: true
+  core:
+    numberOfServers: 3
+  readReplica:
+    numberOfServers: 2
+
+redis:
+  enabled: true
+  architecture: replication
+  master:
+    persistence:
+      enabled: true
+      size: 10Gi
+  replica:
+    replicaCount: 2
+
+minio:
+  enabled: true
+  mode: distributed
+  replicas: 4
+  persistence:
+    size: 100Gi
+
+nats:
+  enabled: true
+  cluster:
+    enabled: true
+    replicas: 3
+
+keycloak:
+  enabled: true
+  replicas: 2
+
+config:
+  logLevel: INFO
+  corsOrigins: "https://aeroforge-x.example.com"
+  apiPrefix: "/api/v1"
+  celeryBrokerUrl: "redis://redis-master:6379/0"
+  celeryResultBackend: "redis://redis-master:6379/1"
+  natsUrl: "nats://nats:4222"
+  keycloakUrl: "http://keycloak:8080"
+  keycloakRealm: "aeroforge"
+  minioEndpoint: "minio:9000"

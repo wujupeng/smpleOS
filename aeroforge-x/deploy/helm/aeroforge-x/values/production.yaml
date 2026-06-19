@@ -1,0 +1,44 @@
+global:
+  environment: production
+
+designCenter:
+  replicas: 3
+  hpa:
+    minReplicas: 3
+    maxReplicas: 8
+
+caeCenter:
+  replicas: 3
+  hpa:
+    minReplicas: 3
+    maxReplicas: 15
+
+celeryWorker:
+  replicas: 5
+  concurrency: 4
+  hpa:
+    minReplicas: 5
+    maxReplicas: 30
+
+config:
+  logLevel: WARNING
+
+postgresql:
+  primary:
+    persistence:
+      size: 100Gi
+  readReplicas:
+    replicaCount: 3
+
+neo4j:
+  core:
+    numberOfServers: 3
+  readReplica:
+    numberOfServers: 3
+
+minio:
+  persistence:
+    size: 500Gi
+
+ingress:
+  tls: true

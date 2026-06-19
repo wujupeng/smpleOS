@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Poetry
+        run: pip install poetry
+      - name: Install dependencies
+        run: poetry install
+      - name: Ruff check
+        run: poetry run ruff check libs services
+      - name: Ruff format check
+        run: poetry run ruff format --check libs services
+      - name: Mypy
+        run: poetry run mypy libs services
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: aeroforge
+          POSTGRES_PASSWORD: aeroforge_dev
+          POSTGRES_DB: aeroforge_x
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      neo4j:
+        image: neo4j:5
+        env:
+          NEO4J_AUTH: neo4j/aeroforge_dev
+        ports:
+          - 7687:7687
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Poetry
+        run: pip install poetry
+      - name: Install dependencies
+        run: poetry install
+      - name: Run tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://aeroforge:aeroforge_dev@localhost:5432/aeroforge_x
+          NEO4J_URI: bolt://localhost:7687
+          NEO4J_USER: neo4j
+          NEO4J_PASSWORD: aeroforge_dev
+          REDIS_URL: redis://localhost:6379/0
+        run: poetry run pytest --cov -v --tb=short

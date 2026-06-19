@@ -1,0 +1,68 @@
+{
+  "dashboard": {
+    "title": "AeroForge-X System Overview",
+    "tags": ["aeroforge-x", "system"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Service Health",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+        "targets": [{"expr": "up", "legendFormat": "{{job}}"}],
+        "fieldConfig": {
+          "defaults": {"thresholds": {"steps": [{"color": "red", "value": 0}, {"color": "green", "value": 1}]}}
+        }
+      },
+      {
+        "id": 2,
+        "title": "Request Rate (req/s)",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "targets": [{"expr": "sum(rate(http_requests_total[5m])) by (service)", "legendFormat": "{{service}}"}]
+      },
+      {
+        "id": 3,
+        "title": "Error Rate (%)",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "targets": [{"expr": "sum(rate(http_requests_total{status_code=~\"5..\"}[5m])) by (service) / sum(rate(http_requests_total[5m])) by (service) * 100", "legendFormat": "{{service}}"}]
+      },
+      {
+        "id": 4,
+        "title": "P99 Latency (s)",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "targets": [{"expr": "aeroforge:request_latency:p99:5m", "legendFormat": "{{service}}"}]
+      },
+      {
+        "id": 5,
+        "title": "CAE Task Queue",
+        "type": "bargauge",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+        "targets": [{"expr": "aeroforge:cae_tasks:queue_length", "legendFormat": "{{task_type}}"}]
+      },
+      {
+        "id": 6,
+        "title": "Active Work Orders",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 20},
+        "targets": [{"expr": "sum(aeroforge:work_orders:active)", "legendFormat": "Total"}]
+      },
+      {
+        "id": 7,
+        "title": "SPC Out-of-Control",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 20},
+        "targets": [{"expr": "sum(aeroforge:spc:out_of_control_points)", "legendFormat": "OOC Points"}]
+      },
+      {
+        "id": 8,
+        "title": "Inventory Alerts",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 20},
+        "targets": [{"expr": "sum(aeroforge:inventory:below_safety_stock)", "legendFormat": "Below Safety"}]
+      }
+    ]
+  }
+}

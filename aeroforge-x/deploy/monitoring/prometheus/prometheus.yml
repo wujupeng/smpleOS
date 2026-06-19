@@ -1,0 +1,97 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'aeroforge-x'
+    environment: 'production'
+
+rule_files:
+  - 'recording_rules.yml'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+scrape_configs:
+  - job_name: 'design-center'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['design-center:8000']
+        labels:
+          service: 'design-center'
+
+  - job_name: 'cae-center'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['cae-center:8001']
+        labels:
+          service: 'cae-center'
+
+  - job_name: 'mes-center'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['mes-center:8002']
+        labels:
+          service: 'mes-center'
+
+  - job_name: 'digital-twin-center'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['digital-twin-center:8003']
+        labels:
+          service: 'digital-twin-center'
+
+  - job_name: 'ai-engine'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['ai-engine:8004']
+        labels:
+          service: 'ai-engine'
+
+  - job_name: 'qms-service'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['qms-service:8005']
+        labels:
+          service: 'qms-service'
+
+  - job_name: 'supply-chain'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['supply-chain:8006']
+        labels:
+          service: 'supply-chain'
+
+  - job_name: 'analytics'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['analytics:8007']
+        labels:
+          service: 'analytics'
+
+  - job_name: 'celery-workers'
+    static_configs:
+      - targets: ['celery-worker:5555']
+        labels:
+          service: 'celery-worker'
+
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  - job_name: 'neo4j'
+    static_configs:
+      - targets: ['neo4j-exporter:9192']
+
+  - job_name: 'nats'
+    static_configs:
+      - targets: ['nats-exporter:7777']
+
+  - job_name: 'minio'
+    static_configs:
+      - targets: ['minio:9000']

@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "aeroforge-db"
+version = "0.1.0"
+description = "AeroForge-X database utilities - PostgreSQL, Neo4j, MinIO, TimescaleDB"
+authors = ["AeroForge-X Team"]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.36"}
+asyncpg = "^0.30.0"
+alembic = "^1.14.0"
+neo4j = "^5.26.0"
+minio = "^7.2.12"
+pydantic = "^2.10.0"
+pydantic-settings = "^2.7.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

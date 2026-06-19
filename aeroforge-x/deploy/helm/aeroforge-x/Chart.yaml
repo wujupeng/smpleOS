@@ -1,0 +1,32 @@
+apiVersion: v2
+name: aeroforge-x
+description: AeroForge-X - Aircraft Design-to-Manufacturing Operating System
+type: application
+version: 0.3.0
+appVersion: "0.3.0"
+home: https://aeroforge-x.example.com
+maintainers:
+  - name: AeroForge Team
+keywords:
+  - aerospace
+  - manufacturing
+  - cad
+  - cae
+  - mes
+dependencies:
+  - name: postgresql
+    version: "15.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: neo4j
+    version: "5.x.x"
+    repository: https://neo4j.github.io/neo4j-helm
+    condition: neo4j.enabled
+  - name: redis
+    version: "18.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+  - name: minio
+    version: "5.x.x"
+    repository: https://charts.min.io/
+    condition: minio.enabled

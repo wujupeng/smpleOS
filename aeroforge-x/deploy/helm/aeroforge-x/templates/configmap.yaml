@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aeroforge-config
+  namespace: {{ .Release.Namespace }}
+data:
+  ENVIRONMENT: {{ .Values.global.environment }}
+  LOG_LEVEL: {{ .Values.config.logLevel }}
+  CORS_ORIGINS: {{ .Values.config.corsOrigins }}
+  API_PREFIX: {{ .Values.config.apiPrefix }}
+  CELERY_BROKER_URL: {{ .Values.config.celeryBrokerUrl }}
+  CELERY_RESULT_BACKEND: {{ .Values.config.celeryResultBackend }}
+  NATS_URL: {{ .Values.config.natsUrl }}
+  KEYCLOAK_URL: {{ .Values.config.keycloakUrl }}
+  KEYCLOAK_REALM: {{ .Values.config.keycloakRealm }}
+  MINIO_ENDPOINT: {{ .Values.config.minioEndpoint }}

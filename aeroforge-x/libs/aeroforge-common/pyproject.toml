@@ -1,0 +1,12 @@
+[tool.poetry]
+name = "aeroforge-common"
+version = "0.1.0"
+description = "AeroForge-X shared library - domain base classes, events, types, and utilities"
+authors = ["AeroForge-X Team"]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

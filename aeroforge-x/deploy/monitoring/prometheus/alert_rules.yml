@@ -1,0 +1,76 @@
+groups:
+  - name: service_health
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} has been down for more than 2 minutes."
+
+      - alert: HighErrorRate
+        expr: sum(rate(http_requests_total{status_code=~"5.."}[5m])) by (service) / sum(rate(http_requests_total[5m])) by (service) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate on {{ $labels.service }}"
+          description: "Error rate is {{ $value | humanizePercentage }} on {{ $labels.service }}"
+
+      - alert: HighLatency
+        expr: aeroforge:request_latency:p99:5m > 5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency on {{ $labels.service }}"
+          description: "P99 latency is {{ $value }}s on {{ $labels.service }}"
+
+  - name: resource_alerts
+    rules:
+      - alert: HighCPU
+        expr: process_cpu_seconds_total / process_uptime_seconds > 0.8
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.service }}"
+
+      - alert: HighMemory
+        expr: process_resident_memory_bytes / 1073741824 > 3.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.service }}"
+
+  - name: business_alerts
+    rules:
+      - alert: CAETaskBacklog
+        expr: aeroforge:cae_tasks:queue_length > 50
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CAE task backlog on {{ $labels.service }}"
+          description: "{{ $value }} tasks queued for {{ $labels.task_type }}"
+
+      - alert: SPCOutOfControl
+        expr: aeroforge:spc:out_of_control_points > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SPC out-of-control points detected"
+          description: "{{ $value }} out-of-control points on chart {{ $labels.chart_id }}"
+
+      - alert: InventoryBelowSafety
+        expr: aeroforge:inventory:below_safety_stock > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Inventory below safety stock"
+          description: "{{ $value }} items below safety stock in {{ $labels.warehouse }}"

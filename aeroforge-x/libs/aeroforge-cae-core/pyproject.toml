@@ -1,0 +1,12 @@
+[tool.poetry]
+name = "aeroforge-cae-core"
+version = "0.1.0"
+description = "AeroForge-X CAE core library - OpenFOAM/FEniCS adapters, mesh generation, and post-processing"
+authors = ["AeroForge-X Team"]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

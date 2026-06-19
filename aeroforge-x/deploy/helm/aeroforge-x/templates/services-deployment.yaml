@@ -1,0 +1,113 @@
+{{- range $name, $service := dict
+  "design-center" .Values.designCenter
+  "cae-center" .Values.caeCenter
+  "mes-center" .Values.mesCenter
+  "digital-twin-center" .Values.digitalTwinCenter
+  "ai-engine" .Values.aiEngine
+  "qms-service" .Values.qmsService
+  "supply-chain" .Values.supplyChain
+  "analytics" .Values.analytics
+  "tenant-service" .Values.tenantService
+}}
+{{- if $service.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: {{ $name }}
+    chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
+spec:
+  replicas: {{ $service.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+    spec:
+      imagePullSecrets:
+        {{- range $.Values.global.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      containers:
+        - name: {{ $name }}
+          image: "{{ $.Values.global.imageRegistry }}/{{ $service.image.repository }}:{{ $service.image.tag }}"
+          imagePullPolicy: {{ $service.image.pullPolicy | default "IfNotPresent" }}
+          ports:
+            - containerPort: {{ $service.service.port }}
+          env:
+            - name: SERVICE_NAME
+              value: {{ $name }}
+            - name: ENVIRONMENT
+              value: {{ $.Values.global.environment }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: aeroforge-secrets
+                  key: database-url
+            - name: REDIS_URL
+              value: {{ $.Values.config.celeryBrokerUrl }}
+            - name: NATS_URL
+              value: {{ $.Values.config.natsUrl }}
+            - name: KEYCLOAK_URL
+              value: {{ $.Values.config.keycloakUrl }}
+            - name: LOG_LEVEL
+              value: {{ $.Values.config.logLevel }}
+          resources:
+            {{- toYaml $service.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ $service.service.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ $service.service.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Release.Namespace }}
+spec:
+  type: {{ $service.service.type }}
+  ports:
+    - port: {{ $service.service.port }}
+      targetPort: {{ $service.service.port }}
+      protocol: TCP
+  selector:
+    app: {{ $name }}
+{{- if $service.hpa }}
+{{- if $service.hpa.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $name }}-hpa
+  namespace: {{ $.Release.Namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ $name }}
+  minReplicas: {{ $service.hpa.minReplicas }}
+  maxReplicas: {{ $service.hpa.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $service.hpa.targetCPUUtilization }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

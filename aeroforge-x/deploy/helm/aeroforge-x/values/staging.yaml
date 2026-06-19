@@ -1,0 +1,36 @@
+global:
+  environment: staging
+
+designCenter:
+  replicas: 2
+  hpa:
+    minReplicas: 2
+    maxReplicas: 3
+
+caeCenter:
+  replicas: 2
+  hpa:
+    minReplicas: 2
+    maxReplicas: 5
+
+celeryWorker:
+  replicas: 2
+  hpa:
+    minReplicas: 2
+    maxReplicas: 8
+
+config:
+  logLevel: INFO
+
+postgresql:
+  primary:
+    persistence:
+      size: 30Gi
+  readReplicas:
+    replicaCount: 1
+
+neo4j:
+  core:
+    numberOfServers: 3
+  readReplica:
+    numberOfServers: 1
