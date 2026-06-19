@@ -213,10 +213,43 @@ class ConflictResolutionReport:
 
 class ConfigurationManagerService:
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
         self._blocks: dict[str, BlockConfiguration] = {}
         self._sns: dict[str, SerialNumberConfiguration] = {}
         self._hierarchies: dict[str, ConfigurationHierarchy] = {}
+
+    def _persist_block(self, block: BlockConfiguration) -> None:
+        if self._repo is None:
+            return
+        self._repo.save_block({
+            "block_id": block.block_id,
+            "aircraft_type": block.aircraft_type,
+            "block_name": block.block_name,
+            "design_config_id": block.design_config.config_id if block.design_config else None,
+            "manufacturing_config_id": block.manufacturing_config.config_id if block.manufacturing_config else None,
+            "operational_config_id": block.operational_config.config_id if block.operational_config else None,
+            "locked": block.locked,
+        })
+
+    def _persist_sn(self, sn: SerialNumberConfiguration) -> None:
+        if self._repo is None:
+            return
+        self._repo.save_sn({
+            "sn_id": sn.sn_id,
+            "tail_number": sn.tail_number,
+            "block_id": sn.block_id,
+            "design_config_id": sn.design_config.config_id if sn.design_config else None,
+            "manufacturing_config_id": sn.manufacturing_config.config_id if sn.manufacturing_config else None,
+            "operational_config_id": sn.operational_config.config_id if sn.operational_config else None,
+            "sn_modifications": [
+                {"modification_type": m.modification_type, "item_id": m.item_id,
+                 "new_values": m.new_values, "reason": m.reason}
+                for m in sn.sn_modifications
+            ],
+            "service_bulletins": sn.service_bulletins,
+            "repair_alterations": sn.repair_alterations,
+        })
 
     def createBlockConfig(
         self, aircraft_type: str, block_name: str
@@ -238,6 +271,7 @@ class ConfigurationManagerService:
             design_config=design_config,
         )
         self._blocks[block_id] = block
+        self._persist_block(block)
 
         if aircraft_type not in self._hierarchies:
             self._hierarchies[aircraft_type] = ConfigurationHierarchy(
@@ -281,6 +315,7 @@ class ConfigurationManagerService:
                 status="Active",
             )
         self._sns[sn_id] = sn
+        self._persist_sn(sn)
         self._hierarchies[block.aircraft_type].total_serial_numbers += 1
 
         return sn
@@ -323,6 +358,7 @@ class ConfigurationManagerService:
                 version=1,
                 status="Active",
             )
+            self._persist_block(new_block)
 
         return new_block
 
@@ -351,6 +387,7 @@ class ConfigurationManagerService:
                             )
                         )
                         break
+        self._persist_sn(sn)
 
         return sn
 

@@ -144,7 +144,9 @@ class SBOM:
 
 class BOMThreeViewManagerService:
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._eboms: dict[str, EBOM] = {}
         self._mboms: dict[str, MBOM] = {}
         self._sboms: dict[str, SBOM] = {}

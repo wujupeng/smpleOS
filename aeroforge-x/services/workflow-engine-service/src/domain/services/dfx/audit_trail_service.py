@@ -110,7 +110,9 @@ ACTION_SEVERITY_MAP = {
 
 class AuditTrailService:
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._entries: list[AuditEntry] = []
         self._hash_chain: list[str] = []
 

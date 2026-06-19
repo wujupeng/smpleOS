@@ -71,7 +71,9 @@ class LogQuery:
 
 class StructuredLoggingService:
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._logs: list[StructuredLogEvent] = []
 
     def logConfigChangeTransition(

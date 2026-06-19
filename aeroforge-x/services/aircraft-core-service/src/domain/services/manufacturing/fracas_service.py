@@ -162,7 +162,9 @@ _ROOT_CAUSE_NAMES: dict[str, tuple[str, str]] = {
 
 class FRACASService:
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._reports: dict[str, FailureReport] = {}
         self._causal_engine = CausalGraphEngine(
             engine_id=f"CGE-{uuid.uuid4().hex[:8].upper()}",

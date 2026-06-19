@@ -74,7 +74,9 @@ class DatasetDriftDetectionService:
     PSI_THRESHOLD = 0.25
     CONCEPT_DRIFT_SIGMA = 2.0
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._history: list[DriftHistoryEntry] = []
         self._alerts: list[dict] = []
 

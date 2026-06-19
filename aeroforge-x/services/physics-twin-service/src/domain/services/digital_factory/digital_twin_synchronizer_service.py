@@ -110,7 +110,9 @@ class DigitalTwinSynchronizerService:
 
     DEVIATION_THRESHOLD_PCT = 5.0
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._twin_states: dict[str, dict] = {}
         self._physical_states: dict[str, dict] = {}
         self._sync_log: list[dict] = []

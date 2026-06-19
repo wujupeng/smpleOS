@@ -34,7 +34,9 @@ class FleetSchedule:
 
 class FleetOptimizerService:
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._schedules: dict[str, FleetSchedule] = {}
 
     def optimize_fleet_schedule(

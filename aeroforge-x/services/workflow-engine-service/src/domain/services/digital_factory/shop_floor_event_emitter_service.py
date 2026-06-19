@@ -76,7 +76,9 @@ class ShopFloorEventEmitterService:
 
     DEFAULT_PLAYBACK_WINDOW_S = 30 * 24 * 3600
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._events: list[ShopFloorEvent] = []
 
     def _emit_event(

@@ -246,7 +246,9 @@ class NDTMethodAdapterPlugin(IPlugin):
 
 class PluginRegistryService:
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._plugins: dict[str, IPlugin] = {}
         self._descriptors: dict[str, PluginDescriptor] = {}
 

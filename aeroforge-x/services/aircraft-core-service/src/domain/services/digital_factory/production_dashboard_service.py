@@ -98,7 +98,9 @@ class ProductionDashboardService:
     OEE_LOW_THRESHOLD = 0.65
     UTILIZATION_BOTTLENECK_THRESHOLD = 0.90
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._oee_data: dict[str, EquipmentOEE] = {}
         self._agv_data: dict[str, AGVDetail] = {}
         self._operation_utilization: dict[str, float] = {}

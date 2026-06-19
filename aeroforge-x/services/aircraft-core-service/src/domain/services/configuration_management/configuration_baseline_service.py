@@ -113,7 +113,9 @@ class BaselineDeltaReport:
 
 class ConfigurationBaselineService:
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._baselines: dict[str, ConfigurationBaseline] = {}
 
     def establishFBL(

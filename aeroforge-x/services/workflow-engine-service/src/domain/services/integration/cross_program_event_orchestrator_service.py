@@ -142,7 +142,9 @@ MAX_RETRY = 3
 
 class CrossProgramEventOrchestratorService:
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._results: dict[str, IntegrationResult] = {}
         self._health: dict[IntegrationPoint, IntegrationHealth] = {
             pt: IntegrationHealth(integration_point=pt) for pt in IntegrationPoint

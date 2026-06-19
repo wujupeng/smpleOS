@@ -99,7 +99,9 @@ class RegulatoryLibraryService:
         "25.1321": {"easa": "CS-25.1321", "type": "Equivalent"},
     }
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._libraries: dict[str, RegulatoryLibrary] = {}
 
     def importRegulation(

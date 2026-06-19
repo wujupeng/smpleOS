@@ -124,10 +124,16 @@ class ContainmentActionResult:
 
 class MaterialLotTrackerService:
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
         self._lots: dict[str, MaterialLot] = {}
         self._part_to_lot: dict[str, str] = {}
         self._genealogy: dict[str, list[GenealogyStep]] = {}
+
+    def _persist_lot(self, lot: MaterialLot) -> None:
+        if self._repo is None:
+            return
+        self._repo.save_lot(lot.to_dict())
 
     def receiveMaterialLot(self, lot_data: MaterialLot) -> MaterialLot:
         if lot_data.lot_id in self._lots:
@@ -135,6 +141,7 @@ class MaterialLotTrackerService:
 
         self._lots[lot_data.lot_id] = lot_data
         self._genealogy[lot_data.lot_id] = []
+        self._persist_lot(lot_data)
         return lot_data
 
     def forwardTraceability(self, lot_id: str) -> ForwardTraceResult:

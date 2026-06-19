@@ -136,7 +136,9 @@ class DualAuthorizationSession:
 
 class RBACPermissionService:
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._users: dict[str, User] = {}
         self._dual_auth_sessions: dict[str, DualAuthorizationSession] = {}
 

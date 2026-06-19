@@ -114,7 +114,9 @@ class ComplianceDashboard:
 
 class CertificationComplianceDashboardService:
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._dashboards: dict[str, ComplianceDashboard] = {}
 
     def generateDashboard(

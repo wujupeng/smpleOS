@@ -59,7 +59,9 @@ class FallbackResult:
 
 class PropagationConsistencyVerifier:
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._verifications: dict[str, ConsistencyVerificationResult] = {}
         self._fallbacks: list[FallbackResult] = []
         self._fallback_count = 0

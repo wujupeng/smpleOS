@@ -128,11 +128,26 @@ class SupplierRegistryService:
     WEIGHT_CAR = 0.15
     WEIGHT_AUDIT = 0.15
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
         self._suppliers: dict[str, SupplierProfile] = {}
         self._ratings: dict[str, SupplierQualityRating] = {}
         self._workflows: dict[str, SupplierApprovalWorkflow] = {}
         self._bom_parts: dict[str, list[str]] = {}
+
+    def _persist_supplier(self, profile: SupplierProfile) -> None:
+        if self._repo is None:
+            return
+        self._repo.save_supplier(profile.to_dict())
+
+    def _persist_rating(self, supplier_id: str, rating: SupplierQualityRating) -> None:
+        if self._repo is None:
+            return
+        self._repo.save_rating({
+            "rating_id": f"RAT-{supplier_id}",
+            "supplier_id": supplier_id,
+            **rating.to_dict(),
+        })
 
     def registerSupplier(self, profile: SupplierProfile) -> SupplierProfile:
         if profile.supplier_id in self._suppliers:
@@ -143,6 +158,7 @@ class SupplierRegistryService:
         self._workflows[profile.supplier_id] = SupplierApprovalWorkflow(
             supplier_id=profile.supplier_id
         )
+        self._persist_supplier(profile)
         return profile
 
     def approveSupplierWorkflow(self, supplier_id: str) -> SupplierApprovalWorkflow:
@@ -165,9 +181,11 @@ class SupplierRegistryService:
         if next_stage == ApprovalStage.APPROVED:
             supplier = self._suppliers[supplier_id]
             supplier.status = SupplierStatus.APPROVED
+            self._persist_supplier(supplier)
         elif next_stage == ApprovalStage.REJECTED:
             supplier = self._suppliers[supplier_id]
             supplier.status = SupplierStatus.DISQUALIFIED
+            self._persist_supplier(supplier)
 
         return workflow
 
@@ -194,6 +212,7 @@ class SupplierRegistryService:
         rating.overall_rating = round(overall, 2)
         rating.is_below_threshold = overall < self.RATING_THRESHOLD
         self._ratings[supplier_id] = rating
+        self._persist_rating(supplier_id, rating)
 
         return rating
 
@@ -205,6 +224,7 @@ class SupplierRegistryService:
 
         supplier = self._suppliers[supplier_id]
         supplier.status = SupplierStatus.SUSPENDED
+        self._persist_supplier(supplier)
 
         affected_parts = list(supplier.approved_parts)
         recommended = []

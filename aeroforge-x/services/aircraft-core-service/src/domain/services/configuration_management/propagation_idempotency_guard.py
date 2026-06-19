@@ -31,7 +31,9 @@ class IdempotencyCheckResult:
 
 class PropagationIdempotencyGuard:
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._processed: dict[str, str] = {}
         self._locks: dict[str, int] = {}
 

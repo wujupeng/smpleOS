@@ -176,7 +176,9 @@ class SevenDisciplineMDOService:
     V5_DISCIPLINES = ["Aero", "Structure", "Propulsion", "Control"]
     V6_NEW_DISCIPLINES = ["Cost", "Manufacturing", "Certification"]
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._solvers: dict[str, IDisciplineSolver7D] = {}
         self._runs: dict[str, dict] = {}
 

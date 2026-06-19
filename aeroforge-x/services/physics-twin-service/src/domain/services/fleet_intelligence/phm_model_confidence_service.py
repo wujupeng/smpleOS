@@ -139,7 +139,9 @@ DATASET_QUALITY_IMPACT_PCT = 0.03
 
 class PHMModelConfidenceService:
 
-    def __init__(self) -> None:
+    def __init__(self, repo=None) -> None:
+        self._repo = repo
+def __init__(self, repo=None) -> None:
         self._predictions: dict[str, RULPredictionWithConfidence] = {}
         self._audits: dict[str, MaintenanceDecisionAudit] = {}
         self._reviews: list[LowConfidenceReview] = []
