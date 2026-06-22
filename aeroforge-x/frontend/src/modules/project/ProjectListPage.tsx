@@ -8,7 +8,7 @@ import {
   RocketOutlined, PlusOutlined, SettingOutlined,
   TeamOutlined, ProjectOutlined, SwapOutlined,
   CheckCircleOutlined, ClockCircleOutlined, PauseCircleOutlined,
-  ArchiveOutlined, ExperimentOutlined,
+  InboxOutlined, ExperimentOutlined,
 } from '@ant-design/icons'
 import apiClient from '../../services/apiClient'
 import { useProjectStore } from '../../stores/projectStore'
@@ -172,7 +172,7 @@ export default function ProjectListPage() {
             )
           }) : (
             <Col span={24}>
-              <Empty description="暂无项目，点击"新建项目"开始" />
+              <Empty description="暂无项目，点击「新建项目」开始" />
             </Col>
           )}
         </Row>

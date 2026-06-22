@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Input, Select, Space, Card, Tag, Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { aircraftCoreApi } from '../../../api/aircraftCoreApi';
+import { aircraftCoreApi } from '../../api/aircraftCoreApi';
 
 const { Search } = Input;
 

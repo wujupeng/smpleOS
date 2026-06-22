@@ -219,10 +219,10 @@ class ConfigurationManagerService:
         self._sns: dict[str, SerialNumberConfiguration] = {}
         self._hierarchies: dict[str, ConfigurationHierarchy] = {}
 
-    def _persist_block(self, block: BlockConfiguration) -> None:
+    async def _persist_block(self, block: BlockConfiguration) -> None:
         if self._repo is None:
             return
-        self._repo.save_block({
+        await self._repo.save_block({
             "block_id": block.block_id,
             "aircraft_type": block.aircraft_type,
             "block_name": block.block_name,
@@ -232,10 +232,10 @@ class ConfigurationManagerService:
             "locked": block.locked,
         })
 
-    def _persist_sn(self, sn: SerialNumberConfiguration) -> None:
+    async def _persist_sn(self, sn: SerialNumberConfiguration) -> None:
         if self._repo is None:
             return
-        self._repo.save_sn({
+        await self._repo.save_sn({
             "sn_id": sn.sn_id,
             "tail_number": sn.tail_number,
             "block_id": sn.block_id,
@@ -251,7 +251,7 @@ class ConfigurationManagerService:
             "repair_alterations": sn.repair_alterations,
         })
 
-    def createBlockConfig(
+    async def createBlockConfig(
         self, aircraft_type: str, block_name: str
     ) -> BlockConfiguration:
         block_id = f"BLK-{aircraft_type}-{block_name}"
@@ -270,8 +270,8 @@ class ConfigurationManagerService:
             block_name=block_name,
             design_config=design_config,
         )
+        await self._persist_block(block)
         self._blocks[block_id] = block
-        self._persist_block(block)
 
         if aircraft_type not in self._hierarchies:
             self._hierarchies[aircraft_type] = ConfigurationHierarchy(
@@ -281,7 +281,7 @@ class ConfigurationManagerService:
 
         return block
 
-    def createSNConfig(
+    async def createSNConfig(
         self, block_id: str, tail_number: str
     ) -> SerialNumberConfiguration:
         if block_id not in self._blocks:
@@ -314,25 +314,40 @@ class ConfigurationManagerService:
                 version=1,
                 status="Active",
             )
+        await self._persist_sn(sn)
         self._sns[sn_id] = sn
-        self._persist_sn(sn)
         self._hierarchies[block.aircraft_type].total_serial_numbers += 1
 
         return sn
 
-    def getConfigHierarchy(self, aircraft_type: str) -> ConfigurationHierarchy:
-        if aircraft_type not in self._hierarchies:
-            raise ValueError(f"Aircraft type not found: {aircraft_type}")
-        return self._hierarchies[aircraft_type]
+    async def getConfigHierarchy(self, aircraft_type: str) -> ConfigurationHierarchy:
+        if aircraft_type in self._hierarchies:
+            return self._hierarchies[aircraft_type]
+        if self._repo is not None:
+            blocks_data = await self._repo.list_blocks_by_aircraft_type(aircraft_type)
+            if blocks_data:
+                hierarchy = ConfigurationHierarchy(aircraft_type=aircraft_type)
+                for bd in blocks_data:
+                    block = self._block_from_dict(bd)
+                    self._blocks[block.block_id] = block
+                    hierarchy.blocks.append(block)
+                    sns_data = await self._repo.list_sns_by_block(block.block_id)
+                    for sd in sns_data:
+                        sn = self._sn_from_dict(sd)
+                        self._sns[sn.sn_id] = sn
+                    hierarchy.total_serial_numbers += len(sns_data)
+                self._hierarchies[aircraft_type] = hierarchy
+                return hierarchy
+        raise ValueError(f"Aircraft type not found: {aircraft_type}")
 
-    def inheritBlockConfig(
+    async def inheritBlockConfig(
         self, new_block_name: str, source_block_id: str, changes: dict
     ) -> BlockConfiguration:
         if source_block_id not in self._blocks:
             raise ValueError(f"Source block not found: {source_block_id}")
 
         source = self._blocks[source_block_id]
-        new_block = self.createBlockConfig(source.aircraft_type, new_block_name)
+        new_block = await self.createBlockConfig(source.aircraft_type, new_block_name)
 
         if source.design_config:
             new_items = [
@@ -358,11 +373,11 @@ class ConfigurationManagerService:
                 version=1,
                 status="Active",
             )
-            self._persist_block(new_block)
+            await self._persist_block(new_block)
 
         return new_block
 
-    def inheritSNConfig(
+    async def inheritSNConfig(
         self, new_sn_id: str, block_id: str, modifications: dict
     ) -> SerialNumberConfiguration:
         if block_id not in self._blocks:
@@ -370,7 +385,7 @@ class ConfigurationManagerService:
 
         block = self._blocks[block_id]
         tail_number = new_sn_id.replace("SN-", "")
-        sn = self.createSNConfig(block_id, tail_number)
+        sn = await self.createSNConfig(block_id, tail_number)
 
         for item_id, mod_vals in modifications.items():
             if sn.design_config:
@@ -387,20 +402,19 @@ class ConfigurationManagerService:
                             )
                         )
                         break
-        self._persist_sn(sn)
+        await self._persist_sn(sn)
 
         return sn
 
-    def detectConfigConflicts(
+    async def detectConfigConflicts(
         self, block_id: str, sn_id: str
     ) -> ConflictResolutionReport:
-        if block_id not in self._blocks:
+        block = await self.getBlock(block_id)
+        if block is None:
             raise ValueError(f"Block not found: {block_id}")
-        if sn_id not in self._sns:
+        sn = await self.getSN(sn_id)
+        if sn is None:
             raise ValueError(f"SN not found: {sn_id}")
-
-        block = self._blocks[block_id]
-        sn = self._sns[sn_id]
         report = ConflictResolutionReport(block_id=block_id, sn_id=sn_id)
 
         if not block.design_config or not sn.design_config:
@@ -427,8 +441,98 @@ class ConfigurationManagerService:
 
         return report
 
-    def getBlock(self, block_id: str) -> Optional[BlockConfiguration]:
-        return self._blocks.get(block_id)
+    def _block_from_dict(self, data: dict) -> BlockConfiguration:
+        block = BlockConfiguration(
+            block_id=data["block_id"],
+            aircraft_type=data.get("aircraft_type", ""),
+            block_name=data.get("block_name", ""),
+            locked=data.get("locked", False),
+        )
+        if data.get("design_config_id"):
+            block.design_config = DesignConfiguration(
+                config_id=data["design_config_id"], version=1, status="Active"
+            )
+        if data.get("manufacturing_config_id"):
+            block.manufacturing_config = ManufacturingConfiguration(
+                config_id=data["manufacturing_config_id"],
+                source_design_config_id=data.get("design_config_id", ""),
+                version=1, status="Active",
+            )
+        if data.get("operational_config_id"):
+            block.operational_config = OperationalConfiguration(
+                config_id=data["operational_config_id"],
+                source_mfg_config_id=data.get("manufacturing_config_id", ""),
+                version=1, status="Active",
+            )
+        return block
 
-    def getSN(self, sn_id: str) -> Optional[SerialNumberConfiguration]:
-        return self._sns.get(sn_id)
+    def _sn_from_dict(self, data: dict) -> SerialNumberConfiguration:
+        sn = SerialNumberConfiguration(
+            sn_id=data["sn_id"],
+            tail_number=data.get("tail_number", ""),
+            block_id=data.get("block_id", ""),
+        )
+        if data.get("design_config_id"):
+            sn.design_config = DesignConfiguration(
+                config_id=data["design_config_id"], version=1, status="Active"
+            )
+        if data.get("manufacturing_config_id"):
+            sn.manufacturing_config = ManufacturingConfiguration(
+                config_id=data["manufacturing_config_id"],
+                source_design_config_id=data.get("design_config_id", ""),
+                version=1, status="Active",
+            )
+        if data.get("operational_config_id"):
+            sn.operational_config = OperationalConfiguration(
+                config_id=data["operational_config_id"],
+                source_mfg_config_id=data.get("manufacturing_config_id", ""),
+                version=1, status="Active",
+            )
+        for mod_data in data.get("sn_modifications", []):
+            if isinstance(mod_data, dict):
+                sn.sn_modifications.append(SNModification(
+                    modification_type=mod_data.get("modification_type", ""),
+                    item_id=mod_data.get("item_id", ""),
+                    new_values=mod_data.get("new_values", {}),
+                    reason=mod_data.get("reason", ""),
+                ))
+        sn.service_bulletins = data.get("service_bulletins", [])
+        sn.repair_alterations = data.get("repair_alterations", [])
+        return sn
+
+    async def getBlock(self, block_id: str) -> Optional[BlockConfiguration]:
+        if block_id in self._blocks:
+            return self._blocks[block_id]
+        if self._repo is not None:
+            data = await self._repo.get_block(block_id)
+            if data is not None:
+                block = self._block_from_dict(data)
+                self._blocks[block_id] = block
+                return block
+        return None
+
+    async def getSN(self, sn_id: str) -> Optional[SerialNumberConfiguration]:
+        if sn_id in self._sns:
+            return self._sns[sn_id]
+        if self._repo is not None:
+            data = await self._repo.get_sn(sn_id)
+            if data is not None:
+                sn = self._sn_from_dict(data)
+                self._sns[sn_id] = sn
+                return sn
+        return None
+
+    def invalidate_cache(self, aircraft_type: str | None = None, block_id: str | None = None) -> None:
+        if aircraft_type is not None:
+            self._hierarchies.pop(aircraft_type, None)
+        else:
+            self._hierarchies.clear()
+        if block_id is not None:
+            self._blocks.pop(block_id, None)
+            # Also remove SNs belonging to this block
+            sn_ids_to_remove = [sid for sid, sn in self._sns.items() if hasattr(sn, 'block_id') and sn.block_id == block_id]
+            for sid in sn_ids_to_remove:
+                del self._sns[sid]
+        else:
+            self._blocks.clear()
+            self._sns.clear()

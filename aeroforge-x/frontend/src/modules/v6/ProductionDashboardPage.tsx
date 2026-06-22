@@ -8,7 +8,7 @@ import {
   CheckCircleOutlined, WarningOutlined, RobotOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons'
-import { factoryApi } from '../../../api/v6Api'
+import { factoryApi } from '../../api/v6Api'
 
 const { Title, Text } = Typography
 

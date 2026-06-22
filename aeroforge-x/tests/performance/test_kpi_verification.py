@@ -34,7 +34,8 @@ from src.domain.services.digital_factory.shop_floor_data_collector_service impor
 
 class TestConfigPropagationKPI:
 
-    def test_three_view_propagation_under_10s(self):
+    @pytest.mark.asyncio
+    async def test_three_view_propagation_under_10s(self):
         config_mgr = ConfigurationManagerService()
         propagation = ThreeViewConfigPropagationService()
         propagation.registerManufacturingRule(
@@ -43,7 +44,7 @@ class TestConfigPropagationKPI:
         propagation.registerOperationalRule(
             OperationalRule(rule_id="OR-1", rule_type="EquipmentInstallation", rule_expression="BAY-1", priority=1)
         )
-        block = config_mgr.createBlockConfig("A320", "Block-1")
+        block = await config_mgr.createBlockConfig("A320", "Block-1")
 
         change = DesignConfigChange(
             block_id=block.block_id,

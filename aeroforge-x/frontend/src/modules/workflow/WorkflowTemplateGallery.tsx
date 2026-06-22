@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Table, Tag, Button, Space, Select, Input } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { workflowApi } from '../../../api/workflowApi';
+import { workflowApi } from '../../api/workflowApi';
 
 const WorkflowTemplateGallery: React.FC = () => {
   const navigate = useNavigate();

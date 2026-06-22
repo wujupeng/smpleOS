@@ -53,6 +53,9 @@ class AsyncpgRepository(BaseRepository):
     def __init__(self, pool: asyncpg.Pool) -> None:
         self._pool = pool
 
+    def transaction(self):
+        return _TransactionContext(self._pool)
+
     async def _execute(self, query: str, *args) -> str:
         async with self._pool.acquire() as conn:
             return await conn.execute(query, *args)
@@ -82,3 +85,25 @@ class AsyncpgRepository(BaseRepository):
         if isinstance(val, (dict, list)):
             return val
         return json.loads(val)
+
+
+class _TransactionContext:
+    def __init__(self, pool: asyncpg.Pool) -> None:
+        self._pool = pool
+        self._conn: Optional[asyncpg.Connection] = None
+        self._tx = None
+
+    async def __aenter__(self):
+        self._conn = await self._pool.acquire()
+        self._tx = self._conn.transaction()
+        await self._tx.start()
+        return self._conn
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        try:
+            if exc_type is not None:
+                await self._tx.rollback()
+            else:
+                await self._tx.commit()
+        finally:
+            await self._pool.release(self._conn)

@@ -10,7 +10,7 @@ BEGIN;
 CREATE TABLE IF NOT EXISTS uq_method_registry (
     method_id         VARCHAR(64) PRIMARY KEY,
     method_type       VARCHAR(32) NOT NULL,
-    surrogate_model_id VARCHAR(64) NOT NULL REFERENCES cfd_surrogate_model_metadata(model_id),
+    surrogate_model_id VARCHAR(64) NOT NULL,
     hyperparameters   JSONB NOT NULL DEFAULT '{}',
     is_active         BOOLEAN NOT NULL DEFAULT FALSE,
     confidence_level  DOUBLE PRECISION NOT NULL DEFAULT 0.95,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS uq_method_registry (
 -- =====================================================
 CREATE TABLE IF NOT EXISTS mdo_7discipline_runs (
     run_id            VARCHAR(64) PRIMARY KEY,
-    requirement_id    VARCHAR(64) NOT NULL REFERENCES design_requirements(requirement_id),
+    requirement_id    VARCHAR(64) NOT NULL,
     discipline_config JSONB NOT NULL,
     objectives        JSONB NOT NULL,
     constraints_config JSONB NOT NULL,

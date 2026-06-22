@@ -45,8 +45,8 @@ class ConfigurationBaseline:
     block_id: str
     configuration_snapshot: dict
     frozen_items: list[str] = field(default_factory=list)
-    milestone: str
-    established_by: str
+    milestone: str = ""
+    established_by: str = ""
     locked: bool = True
     established_at: str = ""
     change_history: list[BaselineChangeRecord] = field(default_factory=list)
@@ -117,28 +117,42 @@ class ConfigurationBaselineService:
         self._repo = repo
         self._baselines: dict[str, ConfigurationBaseline] = {}
 
-    def establishFBL(
+    async def _persist_baseline(self, baseline: ConfigurationBaseline) -> None:
+        if self._repo is None:
+            return
+        await self._repo.save_baseline({
+            "baseline_id": baseline.baseline_id,
+            "baseline_type": baseline.baseline_type.value,
+            "block_id": baseline.block_id,
+            "configuration_snapshot": baseline.configuration_snapshot,
+            "frozen_items": baseline.frozen_items,
+            "milestone": baseline.milestone,
+            "established_by": baseline.established_by,
+            "locked": baseline.locked,
+        })
+
+    async def establishFBL(
         self, block: BlockConfiguration, established_by: str
     ) -> ConfigurationBaseline:
-        return self._establish_baseline(
+        return await self._establish_baseline(
             block, BaselineType.FBL, BaselineMilestone.SRR, established_by
         )
 
-    def establishFCL(
+    async def establishFCL(
         self, block: BlockConfiguration, established_by: str
     ) -> ConfigurationBaseline:
-        return self._establish_baseline(
+        return await self._establish_baseline(
             block, BaselineType.FCL, BaselineMilestone.PDR, established_by
         )
 
-    def establishFSDL(
+    async def establishFSDL(
         self, block: BlockConfiguration, established_by: str
     ) -> ConfigurationBaseline:
-        return self._establish_baseline(
+        return await self._establish_baseline(
             block, BaselineType.FSDL, BaselineMilestone.CDR, established_by
         )
 
-    def _establish_baseline(
+    async def _establish_baseline(
         self,
         block: BlockConfiguration,
         baseline_type: BaselineType,
@@ -166,17 +180,18 @@ class ConfigurationBaselineService:
         )
         self._baselines[baseline_id] = baseline
         block.locked = True
+        await self._persist_baseline(baseline)
 
         return baseline
 
-    def freezeBaselineItems(self, baseline_id: str) -> ConfigurationBaseline:
-        if baseline_id not in self._baselines:
+    async def freezeBaselineItems(self, baseline_id: str) -> ConfigurationBaseline:
+        baseline = await self.getBaseline(baseline_id)
+        if baseline is None:
             raise ValueError(f"Baseline not found: {baseline_id}")
-        baseline = self._baselines[baseline_id]
         baseline.locked = True
         return baseline
 
-    def trackBaselineChanges(
+    async def trackBaselineChanges(
         self,
         baseline_id: str,
         change_request_id: str,
@@ -184,9 +199,9 @@ class ConfigurationBaselineService:
         approver: str,
         affected_items: list[str],
     ) -> BaselineChangeRecord:
-        if baseline_id not in self._baselines:
+        baseline = await self.getBaseline(baseline_id)
+        if baseline is None:
             raise ValueError(f"Baseline not found: {baseline_id}")
-        baseline = self._baselines[baseline_id]
 
         record = BaselineChangeRecord(
             change_id=f"BCR-{uuid.uuid4().hex[:8]}",
@@ -200,16 +215,15 @@ class ConfigurationBaselineService:
         baseline.change_history.append(record)
         return record
 
-    def compareBaselines(
+    async def compareBaselines(
         self, baseline_id_1: str, baseline_id_2: str
     ) -> BaselineDeltaReport:
-        if baseline_id_1 not in self._baselines:
+        b1 = await self.getBaseline(baseline_id_1)
+        if b1 is None:
             raise ValueError(f"Baseline not found: {baseline_id_1}")
-        if baseline_id_2 not in self._baselines:
+        b2 = await self.getBaseline(baseline_id_2)
+        if b2 is None:
             raise ValueError(f"Baseline not found: {baseline_id_2}")
-
-        b1 = self._baselines[baseline_id_1]
-        b2 = self._baselines[baseline_id_2]
 
         report = BaselineDeltaReport(
             baseline_id_1=baseline_id_1,
@@ -240,5 +254,32 @@ class ConfigurationBaselineService:
 
         return report
 
-    def getBaseline(self, baseline_id: str) -> Optional[ConfigurationBaseline]:
-        return self._baselines.get(baseline_id)
+    def _baseline_from_dict(self, data: dict) -> ConfigurationBaseline:
+        return ConfigurationBaseline(
+            baseline_id=data["baseline_id"],
+            baseline_type=BaselineType(data.get("baseline_type", "FBL")),
+            block_id=data.get("block_id", ""),
+            configuration_snapshot=data.get("configuration_snapshot", {}),
+            frozen_items=data.get("frozen_items", []),
+            milestone=data.get("milestone", ""),
+            established_by=data.get("established_by", ""),
+            locked=data.get("locked", True),
+            established_at=str(data.get("established_at", "")),
+        )
+
+    async def getBaseline(self, baseline_id: str) -> Optional[ConfigurationBaseline]:
+        if baseline_id in self._baselines:
+            return self._baselines[baseline_id]
+        if self._repo is not None:
+            data = await self._repo.get_baseline(baseline_id)
+            if data is not None:
+                baseline = self._baseline_from_dict(data)
+                self._baselines[baseline_id] = baseline
+                return baseline
+        return None
+
+    def invalidate_cache(self, baseline_id: str | None = None) -> None:
+        if baseline_id is not None:
+            self._baselines.pop(baseline_id, None)
+        else:
+            self._baselines.clear()

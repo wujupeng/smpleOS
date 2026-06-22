@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { isDemoMode } from '../config/appMode'
 
 const v6Client = axios.create({
   baseURL: '/api/v6',
@@ -10,25 +9,61 @@ const v6Client = axios.create({
 v6Client.interceptors.response.use(
   (res) => res.data,
   (err) => {
-    console.error('V6 API Error:', err)
+    console.error('V6 API Error:', err?.response?.status, err?.response?.data || err.message)
     return Promise.reject(err)
   }
 )
 
-export const DEMO_MODE = isDemoMode()
-
 export const configApi = {
-  listBlocks: () => v6Client.get('/aircraft-core/config/blocks'),
-  getBlock: (blockId: string) => v6Client.get(`/aircraft-core/config/blocks/${blockId}`),
+  getHierarchy: (aircraftType: string) =>
+    v6Client.get(`/aircraft-core/config-hierarchies/${aircraftType}`),
+
+  getBlock: (blockId: string) =>
+    v6Client.get(`/aircraft-core/block-configurations/${blockId}`),
+
   createBlock: (data: { aircraft_type: string; block_name: string }) =>
-    v6Client.post('/aircraft-core/config/blocks', data),
-  listSNs: (blockId: string) => v6Client.get(`/aircraft-core/config/blocks/${blockId}/sns`),
-  createSN: (blockId: string, data: { tail_number: string }) =>
-    v6Client.post(`/aircraft-core/config/blocks/${blockId}/sns`, data),
-  detectConflicts: (blockId: string, snId: string) =>
-    v6Client.get(`/aircraft-core/config/conflicts?block_id=${blockId}&sn_id=${snId}`),
-  listBaselines: (blockId: string) => v6Client.get(`/aircraft-core/config/baselines?block_id=${blockId}`),
-  establishBaseline: (data: any) => v6Client.post('/aircraft-core/config/baselines', data),
+    v6Client.post('/aircraft-core/block-configurations', data),
+
+  patchBlock: (blockId: string, data: Record<string, unknown>) =>
+    v6Client.patch(`/aircraft-core/block-configurations/${blockId}`, data),
+
+  inheritBlock: (blockId: string, data: { new_block_name: string; changes: Record<string, unknown> }) =>
+    v6Client.post(`/aircraft-core/block-configurations/${blockId}/inherit`, data),
+
+  createSN: (data: { block_id: string; tail_number: string }) =>
+    v6Client.post('/aircraft-core/sn-configurations', data),
+
+  inheritSN: (snId: string, data: { block_id: string; modifications: Record<string, unknown> }) =>
+    v6Client.post(`/aircraft-core/sn-configurations/${snId}/inherit`, data),
+
+  detectConflicts: (data: { block_id: string; sn_id: string }) =>
+    v6Client.post('/aircraft-core/config-conflicts/detect', data),
+
+  detectInconsistencies: (configId: string) =>
+    v6Client.get(`/aircraft-core/configs/${configId}/inconsistencies`),
+
+  propagateChange: (configId: string, data: { block_id: string; changed_items: unknown[]; reason: string }) =>
+    v6Client.post(`/aircraft-core/design-configs/${configId}/propagate-change`, data),
+
+  deriveManufacturing: (configId: string, data: { rules?: unknown[] }) =>
+    v6Client.post(`/aircraft-core/design-configs/${configId}/derive-manufacturing`, data),
+
+  deriveOperational: (configId: string, data: { rules?: unknown[] }) =>
+    v6Client.post(`/aircraft-core/mfg-configs/${configId}/derive-operational`, data),
+}
+
+export const baselineApi = {
+  establishFBL: (data: { block_id: string; established_by: string }) =>
+    v6Client.post('/aircraft-core/baselines/fbl', data),
+
+  establishFCL: (data: { block_id: string; established_by: string }) =>
+    v6Client.post('/aircraft-core/baselines/fcl', data),
+
+  establishFSDL: (data: { block_id: string; established_by: string }) =>
+    v6Client.post('/aircraft-core/baselines/fsdl', data),
+
+  compareBaselines: (data: { baseline_id_1: string; baseline_id_2: string }) =>
+    v6Client.post('/aircraft-core/baselines/compare', data),
 }
 
 export const certApi = {
@@ -36,18 +71,18 @@ export const certApi = {
   getRegulation: (id: string) => v6Client.get(`/aircraft-core/cert/regulations/${id}`),
   listChecklists: (regulationId: string) =>
     v6Client.get(`/aircraft-core/cert/checklists?regulation_id=${regulationId}`),
-  generateChecklist: (data: any) => v6Client.post('/aircraft-core/cert/checklists', data),
+  generateChecklist: (data: unknown) => v6Client.post('/aircraft-core/cert/checklists', data),
   getTraceMatrix: (projectId: string) =>
     v6Client.get(`/aircraft-core/cert/traceability?project_id=${projectId}`),
-  createTraceLink: (data: any) => v6Client.post('/aircraft-core/cert/traceability', data),
+  createTraceLink: (data: unknown) => v6Client.post('/aircraft-core/cert/traceability', data),
   listEvidencePackages: () => v6Client.get('/workflow-engine/cert/evidence'),
-  assemblePackage: (data: any) => v6Client.post('/workflow-engine/cert/evidence', data),
+  assemblePackage: (data: unknown) => v6Client.post('/workflow-engine/cert/evidence', data),
 }
 
 export const supplierApi = {
   listSuppliers: () => v6Client.get('/aircraft-core/supplier/registry'),
   getSupplier: (id: string) => v6Client.get(`/aircraft-core/supplier/registry/${id}`),
-  registerSupplier: (data: any) => v6Client.post('/aircraft-core/supplier/registry', data),
+  registerSupplier: (data: unknown) => v6Client.post('/aircraft-core/supplier/registry', data),
   listLots: (supplierId: string) =>
     v6Client.get(`/aircraft-core/supplier/lots?supplier_id=${supplierId}`),
 }

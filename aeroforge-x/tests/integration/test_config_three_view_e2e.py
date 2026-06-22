@@ -33,8 +33,9 @@ def propagation_svc():
 
 class TestConfigThreeViewE2E:
 
-    def test_full_three_view_lifecycle(self, config_mgr, propagation_svc):
-        block = config_mgr.createBlockConfig("A320", "Block-1")
+    @pytest.mark.asyncio
+    async def test_full_three_view_lifecycle(self, config_mgr, propagation_svc):
+        block = await config_mgr.createBlockConfig("A320", "Block-1")
         assert block.design_config is not None
 
         mfg_rule = ManufacturingRule(
@@ -73,8 +74,9 @@ class TestConfigThreeViewE2E:
         report = propagation_svc.detectInconsistencies(block)
         assert isinstance(report, report.__class__)
 
-    def test_three_view_propagation_timing(self, config_mgr, propagation_svc):
-        block = config_mgr.createBlockConfig("A350", "Block-1")
+    @pytest.mark.asyncio
+    async def test_three_view_propagation_timing(self, config_mgr, propagation_svc):
+        block = await config_mgr.createBlockConfig("A350", "Block-1")
         propagation_svc.registerManufacturingRule(
             ManufacturingRule(rule_id="MR-1", rule_type="ProcessAssignment", rule_expression="CNC", priority=1)
         )

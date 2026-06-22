@@ -30,8 +30,8 @@ def service():
 
 
 @pytest.fixture
-def block_with_design(config_mgr):
-    return config_mgr.createBlockConfig("A320", "Block-1")
+async def block_with_design(config_mgr):
+    return await config_mgr.createBlockConfig("A320", "Block-1")
 
 
 class TestManufacturingDerivation:
@@ -88,8 +88,9 @@ class TestOperationalDerivation:
 
 class TestDesignChangePropagation:
 
-    def test_propagate_design_change(self, service, config_mgr):
-        block = config_mgr.createBlockConfig("A320", "Block-1")
+    @pytest.mark.asyncio
+    async def test_propagate_design_change(self, service, config_mgr):
+        block = await config_mgr.createBlockConfig("A320", "Block-1")
         change = DesignConfigChange(
             block_id=block.block_id,
             changed_items=[{"item_id": block.design_config.configuration_items[0].item_id, "new_values": {"thickness": 5.0}}],
@@ -101,8 +102,9 @@ class TestDesignChangePropagation:
         assert result.operational_updated is True
         assert result.propagation_duration_ms >= 0
 
-    def test_propagate_no_design_config(self, service, config_mgr):
-        block = config_mgr.createBlockConfig("A320", "Block-1")
+    @pytest.mark.asyncio
+    async def test_propagate_no_design_config(self, service, config_mgr):
+        block = await config_mgr.createBlockConfig("A320", "Block-1")
         block.design_config = None
         change = DesignConfigChange(
             block_id=block.block_id,
@@ -134,15 +136,17 @@ class TestRuleRegistration:
 
 class TestInconsistencyDetection:
 
-    def test_detect_no_inconsistencies(self, service, config_mgr):
-        block = config_mgr.createBlockConfig("A320", "Block-1")
+    @pytest.mark.asyncio
+    async def test_detect_no_inconsistencies(self, service, config_mgr):
+        block = await config_mgr.createBlockConfig("A320", "Block-1")
         service.deriveManufacturingConfig(block.design_config)
         if block.design_config:
             service.deriveOperationalConfig(block.manufacturing_config)
         report = service.detectInconsistencies(block)
         assert isinstance(report, ReconciliationReport)
 
-    def test_detect_missing_views(self, service, config_mgr):
-        block = config_mgr.createBlockConfig("A320", "Block-1")
+    @pytest.mark.asyncio
+    async def test_detect_missing_views(self, service, config_mgr):
+        block = await config_mgr.createBlockConfig("A320", "Block-1")
         report = service.detectInconsistencies(block)
         assert len(report.reconciliation_suggestions) > 0

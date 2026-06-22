@@ -8,7 +8,7 @@ import {
   CloseCircleOutlined, SearchOutlined, NodeIndexOutlined,
   SafetyCertificateOutlined,
 } from '@ant-design/icons'
-import { certApi } from '../../../api/v6Api'
+import { certApi } from '../../api/v6Api'
 
 const { Title, Text } = Typography
 const { Option } = Select

@@ -1,6 +1,8 @@
 -- AeroForge-X v2.0 Aircraft Core Data Model Schema
 -- 关联需求：REQ-ACD-001 ~ REQ-ACD-043
 
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 CREATE SCHEMA IF NOT EXISTS aircraft_core;
 
 CREATE TABLE aircraft_core.aircraft_objects (

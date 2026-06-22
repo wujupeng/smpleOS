@@ -7,7 +7,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from src.domain.enums import (
-    AircraftObjectId,
+
     LifecycleState,
     LinkType,
     ObjectType,

@@ -8,7 +8,7 @@ import {
   CheckCircleOutlined, DashboardOutlined, ToolOutlined,
   ExperimentOutlined,
 } from '@ant-design/icons'
-import { fleetApi } from '../../../api/v6Api'
+import { fleetApi } from '../../api/v6Api'
 
 const { Title, Text } = Typography
 

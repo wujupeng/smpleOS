@@ -496,7 +496,7 @@ export default function MaintenanceTwinPage() {
             scroll={{ x: 900 }}
           />
         ) : (
-          <Empty description="暂无维护计划，请点击"生成维护计划"" />
+          <Empty description="暂无维护计划，请点击「生成维护计划」" />
         )}
       </Card>
     </div>

@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: aeroforge-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-aeroforge}
+      POSTGRES_DB: aeroforge
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./migrations/v2_0/001_aircraft_core_tables.sql:/docker-entrypoint-initdb.d/001_aircraft_core_tables.sql:ro
+      - ./migrations/v2_0/002_workflow_engine_tables.sql:/docker-entrypoint-initdb.d/002_workflow_engine_tables.sql:ro
+      - ./migrations/v2_0/003_physics_twin_tables.sql:/docker-entrypoint-initdb.d/003_physics_twin_tables.sql:ro
+      - ./migrations/v6_0/001_physics_twin_v6_tables.sql:/docker-entrypoint-initdb.d/004_physics_twin_v6_tables.sql:ro
+      - ./migrations/v6_0/002_aircraft_core_v6_tables.sql:/docker-entrypoint-initdb.d/005_aircraft_core_v6_tables.sql:ro
+      - ./migrations/v6_1/004_v61_physics_twin_tables.sql:/docker-entrypoint-initdb.d/006_v61_physics_twin_tables.sql:ro
+      - ./migrations/v6_1/005_v61_aircraft_core_tables.sql:/docker-entrypoint-initdb.d/007_v61_aircraft_core_tables.sql:ro
+      - ./migrations/v6_2/006_configuration_uuid_tables.sql:/docker-entrypoint-initdb.d/008_configuration_uuid_tables.sql:ro
+      - ./migrations/v6_3/007_optimistic_lock_version.sql:/docker-entrypoint-initdb.d/009_optimistic_lock_version.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - aeroforge-net
+
+  aircraft-core-service:
+    build:
+      context: ../services/aircraft-core-service
+      dockerfile: Dockerfile
+    container_name: aeroforge-aircraft-core
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgresql://postgres:${PG_PASSWORD:-aeroforge}@postgres:5432/aeroforge
+      ENCRYPTION_MASTER_KEY: ${ENCRYPTION_MASTER_KEY:-aeroforge-master-key-32bytes!!}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/api/v6/aircraft-core/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - aeroforge-net
+
+volumes:
+  pg_data:
+
+networks:
+  aeroforge-net:
+    driver: bridge

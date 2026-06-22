@@ -6,7 +6,7 @@ import {
 } from 'antd'
 import {
   RocketOutlined, TeamOutlined, SettingOutlined,
-  CheckCircleOutlined, PauseCircleOutlined, ArchiveOutlined,
+  CheckCircleOutlined, PauseCircleOutlined, InboxOutlined,
   PlusOutlined, DeleteOutlined,
 } from '@ant-design/icons'
 import { useParams } from 'react-router-dom'

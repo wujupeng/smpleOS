@@ -1,13 +1,18 @@
 import asyncpg
-from neo4j import AsyncGraphDatabase
 import os
+
+try:
+    from neo4j import AsyncGraphDatabase
+    _HAS_NEO4J = True
+except ImportError:
+    _HAS_NEO4J = False
 
 
 class DatabaseConfig:
-    POSTGRES_DSN = os.getenv("POSTGRES_DSN", "postgresql://aeroforge:aeroforge@localhost:5432/aeroforge_x")
-    NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
-    NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
-    NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "aeroforge123")
+    POSTGRES_DSN = os.getenv('DATABASE_URL', os.getenv('POSTGRES_DSN', 'postgresql://postgres:aeroforge@localhost:5432/aeroforge'))
+    NEO4J_URI = os.getenv('NEO4J_URI', 'bolt://localhost:7687')
+    NEO4J_USER = os.getenv('NEO4J_USER', 'neo4j')
+    NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD', 'aeroforge123')
 
 
 _pg_pool: asyncpg.Pool | None = None
@@ -21,13 +26,15 @@ async def get_pg_pool() -> asyncpg.Pool:
             DatabaseConfig.POSTGRES_DSN,
             min_size=5,
             max_size=20,
-            schema="aircraft_core"
+            server_settings={'search_path': 'aircraft_core,public'},
         )
     return _pg_pool
 
 
 async def get_neo4j_driver():
     global _neo4j_driver
+    if not _HAS_NEO4J:
+        return None
     if _neo4j_driver is None:
         _neo4j_driver = AsyncGraphDatabase.driver(
             DatabaseConfig.NEO4J_URI,

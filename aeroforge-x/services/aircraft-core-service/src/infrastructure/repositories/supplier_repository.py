@@ -17,53 +17,53 @@ from src.infrastructure.repositories.base_repository import (
 
 class SupplierRepository(InMemoryRepository):
 
-    def save_supplier(self, supplier: dict) -> None:
+    async def save_supplier(self, supplier: dict) -> None:
         self._put("supplier_profiles", supplier["supplier_id"], supplier)
 
-    def get_supplier(self, supplier_id: str) -> Optional[dict]:
+    async def get_supplier(self, supplier_id: str) -> Optional[dict]:
         return self._get("supplier_profiles", supplier_id)
 
-    def list_suppliers(self, **filters) -> list[dict]:
+    async def list_suppliers(self, **filters) -> list[dict]:
         return self._list("supplier_profiles", **filters)
 
-    def save_rating(self, rating: dict) -> None:
+    async def save_rating(self, rating: dict) -> None:
         self._put("supplier_quality_ratings", rating["rating_id"], rating)
 
-    def get_rating_by_supplier(self, supplier_id: str) -> Optional[dict]:
+    async def get_rating_by_supplier(self, supplier_id: str) -> Optional[dict]:
         ratings = self._list("supplier_quality_ratings", supplier_id=supplier_id)
         return ratings[-1] if ratings else None
 
-    def save_lot(self, lot: dict) -> None:
+    async def save_lot(self, lot: dict) -> None:
         self._put("material_lots", lot["lot_id"], lot)
 
-    def get_lot(self, lot_id: str) -> Optional[dict]:
+    async def get_lot(self, lot_id: str) -> Optional[dict]:
         return self._get("material_lots", lot_id)
 
-    def list_lots_by_supplier(self, supplier_id: str) -> list[dict]:
+    async def list_lots_by_supplier(self, supplier_id: str) -> list[dict]:
         return self._list("material_lots", supplier_id=supplier_id)
 
-    def save_ndt_record(self, record: dict) -> None:
+    async def save_ndt_record(self, record: dict) -> None:
         self._put("ndt_records", record["ndt_id"], record)
 
-    def get_ndt_record(self, ndt_id: str) -> Optional[dict]:
+    async def get_ndt_record(self, ndt_id: str) -> Optional[dict]:
         return self._get("ndt_records", ndt_id)
 
-    def list_ndt_by_part(self, part_id: str) -> list[dict]:
+    async def list_ndt_by_part(self, part_id: str) -> list[dict]:
         return self._list("ndt_records", part_id=part_id)
 
-    def save_quality_issue(self, issue: dict) -> None:
+    async def save_quality_issue(self, issue: dict) -> None:
         self._put("supplier_quality_issues", issue["issue_id"], issue)
 
-    def get_quality_issue(self, issue_id: str) -> Optional[dict]:
+    async def get_quality_issue(self, issue_id: str) -> Optional[dict]:
         return self._get("supplier_quality_issues", issue_id)
 
-    def save_car(self, car: dict) -> None:
+    async def save_car(self, car: dict) -> None:
         self._put("corrective_action_requests", car["car_id"], car)
 
-    def get_car(self, car_id: str) -> Optional[dict]:
+    async def get_car(self, car_id: str) -> Optional[dict]:
         return self._get("corrective_action_requests", car_id)
 
-    def list_cars_by_supplier(self, supplier_id: str) -> list[dict]:
+    async def list_cars_by_supplier(self, supplier_id: str) -> list[dict]:
         return self._list("corrective_action_requests", supplier_id=supplier_id)
 
 

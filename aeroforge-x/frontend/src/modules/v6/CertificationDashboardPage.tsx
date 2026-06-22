@@ -7,7 +7,7 @@ import {
   SafetyCertificateOutlined, CheckCircleOutlined, ClockCircleOutlined,
   FileProtectOutlined, AuditOutlined, WarningOutlined, LockOutlined,
 } from '@ant-design/icons'
-import { certApi } from '../../../api/v6Api'
+import { certApi } from '../../api/v6Api'
 
 const { Title, Text } = Typography
 

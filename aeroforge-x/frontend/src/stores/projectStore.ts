@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import apiClient from '../../services/apiClient'
+import apiClient from '../services/apiClient'
 
 interface ProjectInfo {
   id: string

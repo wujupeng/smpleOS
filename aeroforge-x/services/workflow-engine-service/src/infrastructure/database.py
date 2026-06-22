@@ -3,7 +3,7 @@ import os
 
 
 class DatabaseConfig:
-    POSTGRES_DSN = os.getenv("POSTGRES_DSN", "postgresql://aeroforge:aeroforge@localhost:5432/aeroforge_x")
+    POSTGRES_DSN = os.getenv("DATABASE_URL", os.getenv("POSTGRES_DSN", "postgresql://postgres:aeroforge@localhost:5432/aeroforge"))
 
 
 _pg_pool: asyncpg.Pool | None = None
@@ -16,7 +16,7 @@ async def get_pg_pool() -> asyncpg.Pool:
             DatabaseConfig.POSTGRES_DSN,
             min_size=5,
             max_size=20,
-            schema="workflow_engine"
+            server_settings={"search_path": "workflow_engine,public"},
         )
     return _pg_pool
 

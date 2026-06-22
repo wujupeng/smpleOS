@@ -30,7 +30,7 @@ const TravelerPage: React.FC = () => {
       </Card>
       {current && <Card title={`Traveler: ${current.traveler_id?.slice(0,8)}...`}>
         <Descriptions bordered column={2}>
-          <Descriptions.Item label="Status"><Tag color={current.status==='finalized'?'green':current.status==='non_conforming'?'red':'blue'}>{current.status}</Descriptions.Item></Descriptions.Item>
+          <Descriptions.Item label="Status"><Tag color={current.status==='finalized'?'green':current.status==='non_conforming'?'red':'blue'}>{current.status}</Tag></Descriptions.Item>
           <Descriptions.Item label="Serial Number">{current.serial_number}</Descriptions.Item>
         </Descriptions>
       </Card>}

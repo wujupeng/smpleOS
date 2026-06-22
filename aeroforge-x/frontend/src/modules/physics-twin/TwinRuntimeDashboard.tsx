@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Table, Tag, Button, Space, Statistic, Row, Col } from 'antd';
-import { physicsTwinApi } from '../../../api/physicsTwinApi';
+import { physicsTwinApi } from '../../api/physicsTwinApi';
 
 const TwinRuntimeDashboard: React.FC = () => {
   const [runtimes, setRuntimes] = useState<any[]>([]);

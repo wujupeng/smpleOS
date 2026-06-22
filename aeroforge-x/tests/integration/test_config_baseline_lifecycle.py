@@ -41,17 +41,18 @@ def change_ctrl_svc():
 
 class TestConfigBaselineLifecycle:
 
-    def test_full_baseline_lifecycle(self, config_mgr, baseline_svc, change_ctrl_svc):
-        block = config_mgr.createBlockConfig("A320", "Block-1")
+    @pytest.mark.asyncio
+    async def test_full_baseline_lifecycle(self, config_mgr, baseline_svc, change_ctrl_svc):
+        block = await config_mgr.createBlockConfig("A320", "Block-1")
 
-        fbl = baseline_svc.establishFBL(block, "engineer-1")
+        fbl = await baseline_svc.establishFBL(block, "engineer-1")
         assert fbl.baseline_type == BaselineType.FBL
         assert fbl.locked is True
 
-        fcl = baseline_svc.establishFCL(block, "engineer-2")
+        fcl = await baseline_svc.establishFCL(block, "engineer-2")
         assert fcl.baseline_type == BaselineType.FCL
 
-        fsdl = baseline_svc.establishFSDL(block, "engineer-3")
+        fsdl = await baseline_svc.establishFSDL(block, "engineer-3")
         assert fsdl.baseline_type == BaselineType.FSDL
 
         cr = ConfigurationChangeRequest(
@@ -78,8 +79,8 @@ class TestConfigBaselineLifecycle:
         verify = change_ctrl_svc.verifyChange("CR-001")
         assert verify.is_verified is True
 
-        baseline_svc.trackBaselineChanges(
+        await baseline_svc.trackBaselineChanges(
             fsdl.baseline_id, "CR-001", "DesignChange", "Chief-Engineer", ["item-1"]
         )
-        updated_fsdl = baseline_svc.getBaseline(fsdl.baseline_id)
+        updated_fsdl = await baseline_svc.getBaseline(fsdl.baseline_id)
         assert len(updated_fsdl.change_history) == 1

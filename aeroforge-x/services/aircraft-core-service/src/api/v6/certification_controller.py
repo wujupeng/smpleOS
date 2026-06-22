@@ -17,16 +17,35 @@ from src.domain.services.certification.regulatory_library_service import (
 from src.domain.services.certification.compliance_checklist_service import (
     ComplianceChecklistService,
 )
+from src.infrastructure.repositories.certification_repository import AsyncpgCertificationRepository
+from src.infrastructure.database import get_pg_pool
 
 router = APIRouter(prefix="/api/v6/aircraft-core", tags=["Certification Digital Thread v6"])
 
 _trace_service = RequirementsTraceabilityService()
 _regulatory_service = RegulatoryLibraryService()
 _checklist_service = ComplianceChecklistService()
+_repo_initialized = False
+
+
+async def _ensure_repo() -> None:
+    global _trace_service, _regulatory_service, _checklist_service, _repo_initialized
+    if _repo_initialized:
+        return
+    try:
+        pool = await get_pg_pool()
+        repo = AsyncpgCertificationRepository(pool)
+        _trace_service._repo = repo
+        _regulatory_service._repo = repo
+        _checklist_service._repo = repo
+        _repo_initialized = True
+    except Exception:
+        pass
 
 
 @router.post("/trace-links")
 async def create_trace_link(body: dict[str, Any]):
+    await _ensure_repo()
     source_data = body.get("source", {})
     target_data = body.get("target", {})
     link_type_str = body.get("link_type", "Satisfies")
@@ -49,12 +68,14 @@ async def create_trace_link(body: dict[str, Any]):
 
 @router.get("/traceability-matrices/{project_id}")
 async def get_traceability_matrix(project_id: str):
+    await _ensure_repo()
     matrix = _trace_service.getTraceabilityMatrix(project_id=project_id)
     return matrix.to_dict()
 
 
 @router.post("/traceability-coverage")
 async def compute_traceability_coverage(body: dict[str, Any]):
+    await _ensure_repo()
     project_id = body.get("project_id", "")
     coverage = _trace_service.computeTraceabilityCoverage(project_id=project_id)
     return coverage.to_dict()
@@ -62,6 +83,7 @@ async def compute_traceability_coverage(body: dict[str, Any]):
 
 @router.post("/trace-links/detect-broken")
 async def detect_broken_links(body: dict[str, Any]):
+    await _ensure_repo()
     requirement_id = body.get("requirement_id", "")
     broken = _trace_service.detectBrokenLinks(requirement_id=requirement_id)
     return {"broken_links": [b.to_dict() for b in broken]}
@@ -69,6 +91,7 @@ async def detect_broken_links(body: dict[str, Any]):
 
 @router.post("/trace-links/navigate-forward")
 async def navigate_forward(body: dict[str, Any]):
+    await _ensure_repo()
     requirement_id = body.get("requirement_id", "")
     nodes = _trace_service.navigateForward(requirement_id=requirement_id)
     return {"nodes": [n.to_dict() for n in nodes]}
@@ -76,6 +99,7 @@ async def navigate_forward(body: dict[str, Any]):
 
 @router.post("/trace-links/navigate-backward")
 async def navigate_backward(body: dict[str, Any]):
+    await _ensure_repo()
     certification_id = body.get("certification_id", "")
     nodes = _trace_service.navigateBackward(certification_id=certification_id)
     return {"nodes": [n.to_dict() for n in nodes]}
@@ -83,6 +107,7 @@ async def navigate_backward(body: dict[str, Any]):
 
 @router.post("/regulatory-libraries")
 async def import_regulatory_library(body: dict[str, Any]):
+    await _ensure_repo()
     regulation_type = RegulationType(body.get("regulation_type", "FAA_Part_25"))
     title = body.get("title", "")
     version = body.get("version", "1.0")
@@ -94,6 +119,7 @@ async def import_regulatory_library(body: dict[str, Any]):
 
 @router.put("/regulatory-libraries/{regulation_id}/version")
 async def update_regulation_version(regulation_id: str, body: dict[str, Any]):
+    await _ensure_repo()
     new_version = body.get("new_version", "")
     try:
         result = _regulatory_service.updateRegulationVersion(
@@ -106,6 +132,7 @@ async def update_regulation_version(regulation_id: str, body: dict[str, Any]):
 
 @router.post("/regulatory-requirements/map")
 async def map_equivalent_requirements(body: dict[str, Any]):
+    await _ensure_repo()
     faa_section = body.get("faa_section", "")
     easa_section = body.get("easa_section", "")
     mapping = _regulatory_service.mapEquivalentRequirements(
@@ -116,6 +143,7 @@ async def map_equivalent_requirements(body: dict[str, Any]):
 
 @router.post("/compliance-checklists")
 async def generate_compliance_checklist(body: dict[str, Any]):
+    await _ensure_repo()
     regulation_id = body.get("regulation_id", "")
     project_id = body.get("project_id", "")
     library = _regulatory_service.getLibrary(regulation_id)
@@ -127,6 +155,7 @@ async def generate_compliance_checklist(body: dict[str, Any]):
 
 @router.post("/compliance-checklists/items/{item_id}/link-evidence")
 async def link_checklist_to_evidence(item_id: str, body: dict[str, Any]):
+    await _ensure_repo()
     checklist_id = body.get("checklist_id", "")
     evidence_id = body.get("evidence_id", "")
     try:

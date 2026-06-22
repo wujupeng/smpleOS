@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Descriptions, Tabs, Tag, Button, Space, Timeline } from 'antd';
-import { aircraftCoreApi } from '../../../api/aircraftCoreApi';
+import { aircraftCoreApi } from '../../api/aircraftCoreApi';
 
 const AircraftObjectDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();

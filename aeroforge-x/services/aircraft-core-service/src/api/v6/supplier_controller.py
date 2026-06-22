@@ -7,7 +7,6 @@ from fastapi import APIRouter, HTTPException
 from src.domain.services.supplier.supplier_registry_service import (
     SupplierRegistryService,
     SupplierProfile,
-    ChangeClass,
 )
 from src.domain.services.supplier.material_lot_tracker_service import (
     MaterialLotTrackerService,
@@ -21,16 +20,35 @@ from src.domain.services.supplier.ndt_integration_service import (
     NDTResult,
     NDTFilter,
 )
+from src.infrastructure.repositories.supplier_repository import AsyncpgSupplierRepository
+from src.infrastructure.database import get_pg_pool
 
 router = APIRouter(prefix="/api/v6/aircraft-core", tags=["Supplier Digital Thread v6"])
 
 _supplier_service = SupplierRegistryService()
 _lot_service = MaterialLotTrackerService()
 _ndt_service = NDTIntegrationService()
+_repo_initialized = False
+
+
+async def _ensure_repo() -> None:
+    global _supplier_service, _lot_service, _ndt_service, _repo_initialized
+    if _repo_initialized:
+        return
+    try:
+        pool = await get_pg_pool()
+        repo = AsyncpgSupplierRepository(pool)
+        _supplier_service._repo = repo
+        _lot_service._repo = repo
+        _ndt_service._repo = repo
+        _repo_initialized = True
+    except Exception:
+        pass
 
 
 @router.post("/suppliers")
 async def register_supplier(body: dict[str, Any]):
+    await _ensure_repo()
     profile = SupplierProfile(
         supplier_id=body.get("supplier_id", ""),
         company_name=body.get("company_name", ""),
@@ -38,7 +56,7 @@ async def register_supplier(body: dict[str, Any]):
         capability_matrix=body.get("capability_matrix", {}),
     )
     try:
-        result = _supplier_service.registerSupplier(profile=profile)
+        result = await _supplier_service.registerSupplier(profile=profile)
         return result.to_dict()
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -47,7 +65,7 @@ async def register_supplier(body: dict[str, Any]):
 @router.post("/suppliers/{supplier_id}/approval-workflow")
 async def approve_supplier_workflow(supplier_id: str):
     try:
-        workflow = _supplier_service.approveSupplierWorkflow(supplier_id=supplier_id)
+        workflow = await _supplier_service.approveSupplierWorkflow(supplier_id=supplier_id)
         return workflow.to_dict()
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -56,7 +74,7 @@ async def approve_supplier_workflow(supplier_id: str):
 @router.post("/suppliers/{supplier_id}/quality-rating")
 async def compute_supplier_quality_rating(supplier_id: str, body: dict[str, Any]):
     try:
-        _supplier_service.updateRatingMetrics(
+        await _supplier_service.updateRatingMetrics(
             supplier_id=supplier_id,
             on_time_delivery_rate=body.get("on_time_delivery_rate"),
             first_pass_yield=body.get("first_pass_yield"),
@@ -64,7 +82,7 @@ async def compute_supplier_quality_rating(supplier_id: str, body: dict[str, Any]
             car_responsiveness=body.get("car_responsiveness"),
             audit_findings_score=body.get("audit_findings_score"),
         )
-        rating = _supplier_service.computeQualityRating(supplier_id=supplier_id)
+        rating = await _supplier_service.computeQualityRating(supplier_id=supplier_id)
         return rating.to_dict()
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -74,7 +92,7 @@ async def compute_supplier_quality_rating(supplier_id: str, body: dict[str, Any]
 async def suspend_supplier(supplier_id: str, body: dict[str, Any]):
     reason = body.get("reason", "")
     try:
-        result = _supplier_service.suspendSupplier(supplier_id=supplier_id, reason=reason)
+        result = await _supplier_service.suspendSupplier(supplier_id=supplier_id, reason=reason)
         return result.to_dict()
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

@@ -37,9 +37,10 @@ def trace_svc():
 
 class TestConfigCertInteraction:
 
-    def test_config_change_updates_trace(self, config_mgr, change_ctrl, trace_svc):
+    @pytest.mark.asyncio
+    async def test_config_change_updates_trace(self, config_mgr, change_ctrl, trace_svc):
         req = trace_svc.createRequirement("REQ-001", "Wing structural integrity", "Structural")
-        block = config_mgr.createBlockConfig("A320", "Block-1")
+        block = await config_mgr.createBlockConfig("A320", "Block-1")
 
         cr = ConfigurationChangeRequest(
             request_id="CR-001",

@@ -135,21 +135,21 @@ class SupplierRegistryService:
         self._workflows: dict[str, SupplierApprovalWorkflow] = {}
         self._bom_parts: dict[str, list[str]] = {}
 
-    def _persist_supplier(self, profile: SupplierProfile) -> None:
+    async def _persist_supplier(self, profile: SupplierProfile) -> None:
         if self._repo is None:
             return
-        self._repo.save_supplier(profile.to_dict())
+        await self._repo.save_supplier(profile.to_dict())
 
-    def _persist_rating(self, supplier_id: str, rating: SupplierQualityRating) -> None:
+    async def _persist_rating(self, supplier_id: str, rating: SupplierQualityRating) -> None:
         if self._repo is None:
             return
-        self._repo.save_rating({
+        await self._repo.save_rating({
             "rating_id": f"RAT-{supplier_id}",
             "supplier_id": supplier_id,
             **rating.to_dict(),
         })
 
-    def registerSupplier(self, profile: SupplierProfile) -> SupplierProfile:
+    async def registerSupplier(self, profile: SupplierProfile) -> SupplierProfile:
         if profile.supplier_id in self._suppliers:
             raise ValueError(f"Supplier already registered: {profile.supplier_id}")
 
@@ -158,10 +158,10 @@ class SupplierRegistryService:
         self._workflows[profile.supplier_id] = SupplierApprovalWorkflow(
             supplier_id=profile.supplier_id
         )
-        self._persist_supplier(profile)
+        await self._persist_supplier(profile)
         return profile
 
-    def approveSupplierWorkflow(self, supplier_id: str) -> SupplierApprovalWorkflow:
+    async def approveSupplierWorkflow(self, supplier_id: str) -> SupplierApprovalWorkflow:
         if supplier_id not in self._workflows:
             raise ValueError(f"Supplier workflow not found: {supplier_id}")
 
@@ -181,15 +181,15 @@ class SupplierRegistryService:
         if next_stage == ApprovalStage.APPROVED:
             supplier = self._suppliers[supplier_id]
             supplier.status = SupplierStatus.APPROVED
-            self._persist_supplier(supplier)
+            await self._persist_supplier(supplier)
         elif next_stage == ApprovalStage.REJECTED:
             supplier = self._suppliers[supplier_id]
             supplier.status = SupplierStatus.DISQUALIFIED
-            self._persist_supplier(supplier)
+            await self._persist_supplier(supplier)
 
         return workflow
 
-    def computeQualityRating(self, supplier_id: str) -> SupplierQualityRating:
+    async def computeQualityRating(self, supplier_id: str) -> SupplierQualityRating:
         if supplier_id not in self._suppliers:
             raise ValueError(f"Supplier not found: {supplier_id}")
 
@@ -212,11 +212,11 @@ class SupplierRegistryService:
         rating.overall_rating = round(overall, 2)
         rating.is_below_threshold = overall < self.RATING_THRESHOLD
         self._ratings[supplier_id] = rating
-        self._persist_rating(supplier_id, rating)
+        await self._persist_rating(supplier_id, rating)
 
         return rating
 
-    def suspendSupplier(
+    async def suspendSupplier(
         self, supplier_id: str, reason: str
     ) -> SuspensionResult:
         if supplier_id not in self._suppliers:
@@ -224,7 +224,7 @@ class SupplierRegistryService:
 
         supplier = self._suppliers[supplier_id]
         supplier.status = SupplierStatus.SUSPENDED
-        self._persist_supplier(supplier)
+        await self._persist_supplier(supplier)
 
         affected_parts = list(supplier.approved_parts)
         recommended = []
@@ -257,7 +257,7 @@ class SupplierRegistryService:
             affected_boms=list(set(affected_boms)),
         )
 
-    def updateRatingMetrics(
+    async def updateRatingMetrics(
         self,
         supplier_id: str,
         on_time_delivery_rate: float = None,
@@ -281,7 +281,26 @@ class SupplierRegistryService:
         if audit_findings_score is not None:
             rating.audit_findings_score = audit_findings_score
 
-        return self.computeQualityRating(supplier_id)
+        return await self.computeQualityRating(supplier_id)
 
-    def getSupplier(self, supplier_id: str) -> Optional[SupplierProfile]:
-        return self._suppliers.get(supplier_id)
+    def _supplier_from_dict(self, data: dict) -> SupplierProfile:
+        return SupplierProfile(
+            supplier_id=data["supplier_id"],
+            company_name=data.get("company_name", ""),
+            certifications=data.get("certifications", []),
+            capability_matrix=data.get("capability_matrix", {}),
+            quality_history=data.get("quality_history", {}),
+            status=SupplierStatus(data.get("status", "Pending")),
+            approved_parts=data.get("approved_parts", []),
+        )
+
+    async def getSupplier(self, supplier_id: str) -> Optional[SupplierProfile]:
+        if supplier_id in self._suppliers:
+            return self._suppliers[supplier_id]
+        if self._repo is not None:
+            data = await self._repo.get_supplier(supplier_id)
+            if data is not None:
+                profile = self._supplier_from_dict(data)
+                self._suppliers[supplier_id] = profile
+                return profile
+        return None

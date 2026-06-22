@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, Select, Button, Table, Tag, Space } from 'antd';
-import { aircraftCoreApi } from '../../../api/aircraftCoreApi';
+import { aircraftCoreApi } from '../../api/aircraftCoreApi';
 
 const WorkflowEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();

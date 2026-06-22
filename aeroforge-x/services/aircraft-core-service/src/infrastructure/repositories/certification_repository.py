@@ -18,40 +18,40 @@ from src.infrastructure.repositories.base_repository import (
 
 class CertificationRepository(InMemoryRepository):
 
-    def save_regulation(self, regulation: dict) -> None:
+    async def save_regulation(self, regulation: dict) -> None:
         self._put("regulatory_libraries", regulation["regulation_id"], regulation)
 
-    def get_regulation(self, regulation_id: str) -> Optional[dict]:
+    async def get_regulation(self, regulation_id: str) -> Optional[dict]:
         return self._get("regulatory_libraries", regulation_id)
 
-    def list_regulations(self, **filters) -> list[dict]:
+    async def list_regulations(self, **filters) -> list[dict]:
         return self._list("regulatory_libraries", **filters)
 
-    def save_checklist(self, checklist: dict) -> None:
+    async def save_checklist(self, checklist: dict) -> None:
         self._put("compliance_checklists", checklist["checklist_id"], checklist)
 
-    def get_checklist(self, checklist_id: str) -> Optional[dict]:
+    async def get_checklist(self, checklist_id: str) -> Optional[dict]:
         return self._get("compliance_checklists", checklist_id)
 
-    def save_trace_node(self, node: dict) -> None:
+    async def save_trace_node(self, node: dict) -> None:
         key = node["node_id"]
         if "trace_nodes" not in self._store:
             self._store["trace_nodes"] = {}
         self._store["trace_nodes"][key] = node
 
-    def get_trace_node(self, node_id: str) -> Optional[dict]:
+    async def get_trace_node(self, node_id: str) -> Optional[dict]:
         return self._store.get("trace_nodes", {}).get(node_id)
 
-    def list_trace_nodes(self, **filters) -> list[dict]:
+    async def list_trace_nodes(self, **filters) -> list[dict]:
         return self._list("trace_nodes", **filters)
 
-    def save_trace_link(self, link: dict) -> None:
+    async def save_trace_link(self, link: dict) -> None:
         if "trace_links" not in self._store:
             self._store["trace_links"] = {}
         link_key = f"{link['source_id']}->{link['target_id']}"
         self._store["trace_links"][link_key] = link
 
-    def list_trace_links(self, **filters) -> list[dict]:
+    async def list_trace_links(self, **filters) -> list[dict]:
         return self._list("trace_links", **filters)
 
 
