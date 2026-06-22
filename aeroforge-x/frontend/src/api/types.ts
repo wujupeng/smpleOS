@@ -181,3 +181,66 @@ export interface InheritSNRequest {
   block_id: string
   modifications: Record<string, unknown>
 }
+
+export interface MaterialLot {
+  lot_id: string
+  material_code: string
+  material_name: string
+  supplier_id: string
+  manufacture_date: string | null
+  received_date: string | null
+  certificate_no: string
+  status: string
+  created_at: string | null
+  updated_at: string | null
+}
+
+export interface NDTRecord {
+  ndt_record_id: string
+  material_lot_id: string
+  test_type: string
+  result: string
+  inspector: string
+  test_date: string | null
+  notes: string | null
+  created_at: string | null
+  cars?: CorrectiveActionRequest[]
+}
+
+export interface CorrectiveActionRequest {
+  car_id: string
+  ndt_record_id: string
+  description: string
+  status: string
+  responsible_person: string
+  created_at: string | null
+  updated_at: string | null
+  closed_at: string | null
+}
+
+export interface ComplianceRequirement {
+  requirement_id: string
+  regulation: string
+  description: string
+  compliance_status: string
+  responsible_person: string | null
+  updated_at: string | null
+  evidences?: Evidence[]
+}
+
+export interface Evidence {
+  evidence_id: string
+  requirement_id: string
+  file_id: string
+  file_name: string
+  bucket: string
+  content_type: string
+  file_size: number
+  upload_timestamp: string | null
+  presigned_url?: string | null
+}
+
+export interface QualityThreadResponse {
+  lot_id: string
+  ndt_records: NDTRecord[]
+}

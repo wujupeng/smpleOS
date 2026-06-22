@@ -19,6 +19,9 @@ from src.api.v6.gdt_controller import router as v6_gdt_router
 from src.api.v6.dfx_controller import router as v6_dfx_router
 from src.api.v6.config_identity_controller import router as v6_identity_router
 from src.api.v6.evidence_controller import router as v6_evidence_router
+from src.api.v6.material_controller import router as v6_material_router
+from src.api.v6.quality_controller import router as v6_quality_router
+from src.api.v6.dt_certification_controller import router as v6_dt_cert_router
 
 
 @asynccontextmanager
@@ -56,6 +59,9 @@ app.include_router(v6_gdt_router)
 app.include_router(v6_dfx_router)
 app.include_router(v6_identity_router)
 app.include_router(v6_evidence_router)
+app.include_router(v6_material_router)
+app.include_router(v6_quality_router)
+app.include_router(v6_dt_cert_router)
 
 
 @app.get("/health")

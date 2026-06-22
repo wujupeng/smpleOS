@@ -106,4 +106,64 @@ export const fleetApi = {
     v6Client.get(`/physics-twin/fleet/phm/closed-loop/${predictionId}`),
 }
 
+export const dtApi = {
+  listMaterialLots: (limit = 100, offset = 0) =>
+    v6Client.get(`/aircraft-core/dt/material-lots?limit=${limit}&offset=${offset}`),
+
+  getMaterialLot: (lotId: string) =>
+    v6Client.get(`/aircraft-core/dt/material-lots/${lotId}`),
+
+  createMaterialLot: (data: {
+    material_code: string
+    material_name: string
+    supplier_id: string
+    manufacture_date: string
+    received_date: string
+    certificate_no: string
+    block_id?: string
+  }) => v6Client.post('/aircraft-core/dt/material-lots', data),
+
+  getBlockMaterials: (blockId: string) =>
+    v6Client.get(`/aircraft-core/dt/blocks/${blockId}/materials`),
+
+  createNDTRecord: (data: {
+    material_lot_id: string
+    test_type: string
+    result: string
+    inspector: string
+    test_date: string
+    notes?: string
+  }) => v6Client.post('/aircraft-core/dt/ndt-records', data),
+
+  getNDTRecord: (ndtId: string) =>
+    v6Client.get(`/aircraft-core/dt/ndt-records/${ndtId}`),
+
+  createCAR: (data: {
+    ndt_record_id: string
+    description: string
+    responsible_person: string
+  }) => v6Client.post('/aircraft-core/dt/corrective-actions', data),
+
+  updateCAR: (carId: string, data: { status: string; closed_by?: string }) =>
+    v6Client.patch(`/aircraft-core/dt/corrective-actions/${carId}`, data),
+
+  getQualityThread: (lotId: string) =>
+    v6Client.get(`/aircraft-core/dt/material-lots/${lotId}/quality`),
+
+  getCompliance: (requirementId: string) =>
+    v6Client.get(`/aircraft-core/dt/certification/compliance/${requirementId}`),
+
+  updateCompliance: (requirementId: string, data: {
+    compliance_status: string
+    responsible_person?: string
+  }) =>
+    v6Client.patch(`/aircraft-core/dt/certification/compliance/${requirementId}`, data),
+
+  listComplianceRequirements: (limit = 100, offset = 0) =>
+    v6Client.get(`/aircraft-core/dt/certification/compliance-requirements?limit=${limit}&offset=${offset}`),
+
+  getEvidence: (evidenceId: string) =>
+    v6Client.get(`/aircraft-core/dt/certification/evidence/${evidenceId}`),
+}
+
 export default v6Client

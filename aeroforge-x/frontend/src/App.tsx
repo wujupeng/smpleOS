@@ -70,6 +70,10 @@ import RequirementsTraceabilityPage from './modules/v6/RequirementsTraceabilityP
 import CertificationDashboardPage from './modules/v6/CertificationDashboardPage'
 import FleetHealthDashboardPage from './modules/v6/FleetHealthDashboardPage'
 import ProductionDashboardPage from './modules/v6/ProductionDashboardPage'
+import ConfigurationTracePage from './modules/v6/ConfigurationTracePage'
+import MaterialTracePage from './modules/v6/MaterialTracePage'
+import QualityTracePage from './modules/v6/QualityTracePage'
+import CertificationTracePage from './modules/v6/CertificationTracePage'
 
 const SchemaEditor = lazy(() => import('./modules/aircraft-core/schemas/SchemaEditor'))
 const SchemaVersionManager = lazy(() => import('./modules/aircraft-core/schemas/SchemaVersionManager'))
@@ -195,6 +199,10 @@ function App() {
         <Route path="v6/certification" element={<CertificationDashboardPage />} />
         <Route path="v6/fleet-health" element={<FleetHealthDashboardPage />} />
         <Route path="v6/production" element={<ProductionDashboardPage />} />
+        <Route path="v6/configuration-trace" element={<ConfigurationTracePage />} />
+        <Route path="v6/material-trace" element={<MaterialTracePage />} />
+        <Route path="v6/quality-trace" element={<QualityTracePage />} />
+        <Route path="v6/certification-trace" element={<CertificationTracePage />} />
       </Route>
     </Routes>
   )
