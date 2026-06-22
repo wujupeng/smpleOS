@@ -1,8 +1,12 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
 
 from src.infrastructure.database import close_connections
 from src.infrastructure.event_bus import event_bus
+from src.infrastructure.nats_consumer import register_config_consumer
 from src.api.v2.workflow_definition_controller import router as definition_router
 from src.api.v2.workflow_instance_controller import router as instance_router
 from src.api.v2.event_trigger_controller import router as trigger_router
@@ -18,6 +22,7 @@ from src.api.v6.dfx_controller import router as v6_dfx_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await event_bus.connect()
+    await register_config_consumer(event_bus)
     yield
     await event_bus.close()
     await close_connections()

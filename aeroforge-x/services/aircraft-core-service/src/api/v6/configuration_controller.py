@@ -23,6 +23,10 @@ from src.infrastructure.repositories.configuration_repository import (
     ProtectedColumnError,
 )
 from src.infrastructure.database import get_pg_pool
+from src.infrastructure.event_bus import event_bus
+from src.domain.events.block_updated_event import BlockUpdatedEvent
+from src.domain.events.configuration_updated_event import ConfigurationUpdatedEvent, ChangeType
+from src.infrastructure.graph_client import graph_client
 
 router = APIRouter(prefix="/api/v6/aircraft-core", tags=["Configuration Management v6"])
 
@@ -54,7 +58,20 @@ async def create_block_config(body: dict[str, Any]):
     aircraft_type = body.get("aircraft_type", "")
     block_name = body.get("block_name", "")
     block = await _config_service.createBlockConfig(aircraft_type=aircraft_type, block_name=block_name)
-    return block.to_dict()
+    result = block.to_dict()
+    await graph_client.create_configuration_identity(
+        node_id=block.block_id,
+        block_name=block_name,
+        aircraft_type=aircraft_type,
+    )
+    config_event = ConfigurationUpdatedEvent(
+        configuration_id=block.block_id,
+        block_id=block.block_id,
+        aircraft_type=aircraft_type,
+        change_type=ChangeType.CREATED,
+    )
+    await event_bus.publish_jetstream("aeroforge.config.configuration.updated", config_event.model_dump())
+    return result
 
 
 @router.get("/block-configurations/{block_id}")
@@ -100,6 +117,22 @@ async def update_block_config(block_id: str, body: dict[str, Any]):
             resp["version"] = updated_db.get("version", 1)
             resp["created_at"] = updated_db.get("created_at")
             resp["updated_at"] = updated_db.get("updated_at")
+        aircraft_type = updated_db.get("aircraft_type") if updated_db else None
+        new_version = updated_db.get("version", 1) if updated_db else 1
+        block_event = BlockUpdatedEvent(
+            block_id=block_id,
+            aircraft_type=aircraft_type or "",
+            version=new_version,
+            changed_fields=list(body.keys()),
+        )
+        config_event = ConfigurationUpdatedEvent(
+            configuration_id=updated_db.get("design_config_id", block_id) if updated_db else block_id,
+            block_id=block_id,
+            aircraft_type=aircraft_type or "",
+            change_type=ChangeType.UPDATED,
+        )
+        await event_bus.publish_jetstream("aeroforge.config.block.updated", block_event.model_dump())
+        await event_bus.publish_jetstream("aeroforge.config.configuration.updated", config_event.model_dump())
         return resp
     return updated_db
 

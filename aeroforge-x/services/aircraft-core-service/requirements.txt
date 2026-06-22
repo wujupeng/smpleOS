@@ -6,3 +6,6 @@ python-multipart>=0.0.9
 pint>=0.22.0
 networkx>=3.2.0
 cryptography>=42.0
+nats-py>=2.7.0
+neo4j>=5.0.0
+minio>=7.0.0

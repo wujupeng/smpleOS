@@ -1,11 +1,14 @@
 import asyncpg
 import os
+import logging
 
 try:
     from neo4j import AsyncGraphDatabase
     _HAS_NEO4J = True
 except ImportError:
     _HAS_NEO4J = False
+
+logger = logging.getLogger(__name__)
 
 
 class DatabaseConfig:
@@ -36,10 +39,16 @@ async def get_neo4j_driver():
     if not _HAS_NEO4J:
         return None
     if _neo4j_driver is None:
-        _neo4j_driver = AsyncGraphDatabase.driver(
-            DatabaseConfig.NEO4J_URI,
-            auth=(DatabaseConfig.NEO4J_USER, DatabaseConfig.NEO4J_PASSWORD)
-        )
+        try:
+            _neo4j_driver = AsyncGraphDatabase.driver(
+                DatabaseConfig.NEO4J_URI,
+                auth=(DatabaseConfig.NEO4J_USER, DatabaseConfig.NEO4J_PASSWORD)
+            )
+            await _neo4j_driver.verify_connectivity()
+            logger.info(f"Neo4j connected to {DatabaseConfig.NEO4J_URI}")
+        except Exception as e:
+            logger.warning(f"Neo4j connection failed: {e}, graph features disabled")
+            _neo4j_driver = None
     return _neo4j_driver
 
 

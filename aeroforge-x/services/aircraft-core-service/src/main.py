@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
 
 from src.infrastructure.database import close_connections
 from src.infrastructure.event_bus import event_bus
@@ -14,6 +17,8 @@ from src.api.v6.supplier_controller import router as v6_supplier_router
 from src.api.v6.production_dashboard_controller import router as v6_dashboard_router
 from src.api.v6.gdt_controller import router as v6_gdt_router
 from src.api.v6.dfx_controller import router as v6_dfx_router
+from src.api.v6.config_identity_controller import router as v6_identity_router
+from src.api.v6.evidence_controller import router as v6_evidence_router
 
 
 @asynccontextmanager
@@ -49,6 +54,8 @@ app.include_router(v6_supplier_router)
 app.include_router(v6_dashboard_router)
 app.include_router(v6_gdt_router)
 app.include_router(v6_dfx_router)
+app.include_router(v6_identity_router)
+app.include_router(v6_evidence_router)
 
 
 @app.get("/health")
