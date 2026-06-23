@@ -6,7 +6,7 @@ import os
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
 
-from src.infrastructure.database import close_connections
+from src.infrastructure.database import close_connections, get_pg_pool
 from src.infrastructure.event_bus import event_bus
 from src.api.v2.aircraft_object_controller import router as aircraft_object_router
 from src.api.v2.version_controller import router as version_router
@@ -83,8 +83,54 @@ app.include_router(v6_trace_graph_router)
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "service": "aircraft-core-service", "version": "6.1.0"}
+    from datetime import datetime, timezone
+    checks = {}
+    try:
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            await conn.fetchval("SELECT 1")
+        checks["postgres"] = "connected"
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"PostgreSQL health check failed: {e}")
+        checks["postgres"] = "disconnected"
+
+    try:
+        if event_bus._nc is not None and event_bus._nc.is_connected:
+            checks["nats"] = "connected"
+        else:
+            checks["nats"] = "disconnected"
+    except Exception:
+        checks["nats"] = "disconnected"
+
+    try:
+        from src.infrastructure.database import get_neo4j_driver
+        driver = await get_neo4j_driver()
+        if driver is not None:
+            await driver.verify_connectivity()
+            checks["neo4j"] = "connected"
+        else:
+            checks["neo4j"] = "degraded"
+    except Exception:
+        checks["neo4j"] = "degraded"
+
+    try:
+        from src.infrastructure.object_storage import object_storage
+        client = object_storage._ensure_client()
+        if client is not None:
+            client.bucket_exists("aeroforge-cert-evidence")
+            checks["minio"] = "connected"
+        else:
+            checks["minio"] = "degraded"
+    except Exception:
+        checks["minio"] = "degraded"
+
+    status = "healthy" if checks.get("postgres") == "connected" and checks.get("nats") == "connected" else "degraded"
+    return {
+        "status": status,
+        **checks,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
 
 @app.get("/api/v6/aircraft-core/health")
 async def v6_health_check():
-    return {"status": "healthy", "service": "aircraft-core-service", "version": "6.1.0"}
+    return await health_check()

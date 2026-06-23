@@ -150,7 +150,7 @@ services:
       NEO4J_PASSWORD: ${NEO4J_PASSWORD:-aeroforge_neo4j}
       MINIO_ENDPOINT: minio:9000
       MINIO_ACCESS_KEY: ${MINIO_USER:-aeroforge}
-      MINIO_SECRET_KEY: ${MINIO_SECRET:-aeroforge123}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-aeroforge123}
     depends_on:
       postgres:
         condition: service_healthy
@@ -158,10 +158,15 @@ services:
         condition: service_healthy
       neo4j:
         condition: service_healthy
+      minio:
+        condition: service_healthy
       init-nats:
         condition: service_completed_successfully
       init-neo4j:
         condition: service_completed_successfully
+      init-minio:
+        condition: service_completed_successfully
+
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8001/api/v6/aircraft-core/health || exit 1"]
       interval: 10s
