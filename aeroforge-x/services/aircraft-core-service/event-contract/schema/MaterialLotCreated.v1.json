@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MaterialLotCreated",
+  "type": "object",
+  "properties": {
+    "event_id": { "type": "string", "description": "Unique event identifier (UUID)" },
+    "event_type": { "type": "string", "const": "MaterialLotCreated", "description": "Event type discriminator" },
+    "lot_id": { "type": "string", "description": "Material lot identifier" },
+    "material_code": { "type": "string", "description": "Material code (e.g. AL-2024)" },
+    "supplier_id": { "type": "string", "description": "Supplier identifier" },
+    "block_id": { "type": "string", "description": "Associated block identifier (empty if none)" },
+    "timestamp": { "type": "string", "format": "date-time", "description": "Event timestamp (ISO 8601)" }
+  },
+  "required": ["event_id", "event_type", "lot_id", "material_code", "supplier_id", "block_id", "timestamp"],
+  "additionalProperties": false
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EvidenceUploaded",
+  "type": "object",
+  "properties": {
+    "event_id": { "type": "string", "description": "Unique event identifier (UUID)" },
+    "event_type": { "type": "string", "const": "EvidenceUploaded", "description": "Event type discriminator" },
+    "evidence_id": { "type": "string", "description": "Evidence identifier (UUID)" },
+    "requirement_id": { "type": "string", "description": "Compliance requirement identifier" },
+    "file_id": { "type": "string", "description": "Stored file identifier (UUID)" },
+    "file_name": { "type": "string", "description": "Original file name" },
+    "timestamp": { "type": "string", "format": "date-time", "description": "Event timestamp (ISO 8601)" }
+  },
+  "required": ["event_id", "event_type", "evidence_id", "requirement_id", "file_id", "file_name", "timestamp"],
+  "additionalProperties": false
+}

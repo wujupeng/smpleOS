@@ -166,4 +166,42 @@ export const dtApi = {
     v6Client.get(`/aircraft-core/dt/certification/evidence/${evidenceId}`),
 }
 
+export const dtHardeningApi = {
+  traceQuery: (startNodeId: string, direction = 'both', maxDepth = 5, maxNodes = 100) =>
+    v6Client.get(`/aircraft-core/dt/trace/query?start_node_id=${startNodeId}&direction=${direction}&max_depth=${maxDepth}&max_nodes=${maxNodes}`),
+
+  impactAnalysis: (nodeId: string, maxDepth = 5) =>
+    v6Client.get(`/aircraft-core/dt/trace/impact/${nodeId}?max_depth=${maxDepth}`),
+
+  dependencyQuery: (nodeId: string, maxDepth = 5) =>
+    v6Client.get(`/aircraft-core/dt/trace/dependencies/${nodeId}?max_depth=${maxDepth}`),
+
+  rebuildGraph: () =>
+    v6Client.post('/aircraft-core/dt/trace/rebuild'),
+
+  getTraceStatistics: () =>
+    v6Client.get('/aircraft-core/dt/trace/statistics'),
+
+  getTraceNode: (nodeId: string) =>
+    v6Client.get(`/aircraft-core/dt/trace/nodes/${nodeId}`),
+
+  listTraceNodes: (nodeType?: string, limit = 100, offset = 0) =>
+    v6Client.get(`/aircraft-core/dt/trace/nodes?${nodeType ? `node_type=${nodeType}&` : ''}limit=${limit}&offset=${offset}`),
+
+  getIdentities: (limit = 100, offset = 0) =>
+    v6Client.get(`/aircraft-core/dt/identities?limit=${limit}&offset=${offset}`),
+
+  getIdentity: (identityId: string) =>
+    v6Client.get(`/aircraft-core/dt/identities/${identityId}`),
+
+  getIdentityByDomain: (domain: string, domainId: string) =>
+    v6Client.get(`/aircraft-core/dt/identities/by-domain/${domain}/${domainId}`),
+
+  getEventContracts: () =>
+    v6Client.get('/aircraft-core/dt/event-contracts'),
+
+  getEventContract: (eventType: string) =>
+    v6Client.get(`/aircraft-core/dt/event-contracts/${eventType}`),
+}
+
 export default v6Client

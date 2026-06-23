@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CARCreated",
+  "type": "object",
+  "properties": {
+    "event_id": { "type": "string", "description": "Unique event identifier (UUID)" },
+    "event_type": { "type": "string", "const": "CARCreated", "description": "Event type discriminator" },
+    "car_id": { "type": "string", "description": "Corrective action request identifier (UUID)" },
+    "ndt_record_id": { "type": "string", "description": "Associated NDT record identifier (UUID)" },
+    "description": { "type": "string", "description": "CAR description" },
+    "status": { "type": "string", "enum": ["open", "in_progress", "closed"], "description": "CAR status" },
+    "timestamp": { "type": "string", "format": "date-time", "description": "Event timestamp (ISO 8601)" }
+  },
+  "required": ["event_id", "event_type", "car_id", "ndt_record_id", "description", "status", "timestamp"],
+  "additionalProperties": false
+}

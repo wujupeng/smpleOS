@@ -74,6 +74,7 @@ import ConfigurationTracePage from './modules/v6/ConfigurationTracePage'
 import MaterialTracePage from './modules/v6/MaterialTracePage'
 import QualityTracePage from './modules/v6/QualityTracePage'
 import CertificationTracePage from './modules/v6/CertificationTracePage'
+import TraceAnalysisPage from './modules/v6/TraceAnalysisPage'
 
 const SchemaEditor = lazy(() => import('./modules/aircraft-core/schemas/SchemaEditor'))
 const SchemaVersionManager = lazy(() => import('./modules/aircraft-core/schemas/SchemaVersionManager'))
@@ -203,6 +204,7 @@ function App() {
         <Route path="v6/material-trace" element={<MaterialTracePage />} />
         <Route path="v6/quality-trace" element={<QualityTracePage />} />
         <Route path="v6/certification-trace" element={<CertificationTracePage />} />
+        <Route path="v6/trace-analysis" element={<TraceAnalysisPage />} />
       </Route>
     </Routes>
   )

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "NDTCompleted",
+  "type": "object",
+  "properties": {
+    "event_id": { "type": "string", "description": "Unique event identifier (UUID)" },
+    "event_type": { "type": "string", "const": "NDTCompleted", "description": "Event type discriminator" },
+    "ndt_record_id": { "type": "string", "description": "NDT record identifier (UUID)" },
+    "material_lot_id": { "type": "string", "description": "Associated material lot identifier" },
+    "test_type": { "type": "string", "enum": ["ultrasonic", "radiographic", "penetrant", "magnetic_particle", "eddy_current"], "description": "NDT test method" },
+    "result": { "type": "string", "enum": ["pass", "fail", "conditional"], "description": "NDT test result" },
+    "timestamp": { "type": "string", "format": "date-time", "description": "Event timestamp (ISO 8601)" }
+  },
+  "required": ["event_id", "event_type", "ndt_record_id", "material_lot_id", "test_type", "result", "timestamp"],
+  "additionalProperties": false
+}

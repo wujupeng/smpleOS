@@ -10,6 +10,9 @@ from src.infrastructure.database import get_pg_pool
 from src.infrastructure.repositories.material_lot_repository import MaterialLotRepository
 from src.infrastructure.event_bus import event_bus
 from src.domain.events.material_lot_created_event import MaterialLotCreatedEvent
+from src.infrastructure.event_contract.event_contract_service import get_event_contract_service
+from src.domain.services.identity_service import get_identity_service
+from src.domain.services.trace_graph_service import get_trace_graph_service
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +62,38 @@ async def create_material_lot(body: CreateMaterialLotRequest):
         logger.error(f"Failed to create MaterialLot: {e}")
         raise HTTPException(status_code=422, detail=str(e))
 
+    try:
+        identity_svc = await get_identity_service()
+        await identity_svc.resolve_or_create_identity(
+            domain="material_lot",
+            domain_id=lot.lot_id,
+            label=lot.material_name,
+            node_type="material_lot",
+            related_domain="block" if body.block_id else None,
+            related_domain_id=body.block_id if body.block_id else None,
+        )
+    except Exception as e:
+        logger.warning(f"Identity resolution failed: {e}")
+
+    try:
+        tg_svc = await get_trace_graph_service()
+        block_node = None
+        if body.block_id:
+            block_node = tg_svc._cache.find_node_by_domain("block", body.block_id)
+            if block_node is None:
+                block_node = await tg_svc.create_trace_node(
+                    identity_id=None, node_type="block", label=body.block_id,
+                    properties={"domain": "block", "domain_id": body.block_id},
+                )
+        mat_node = await tg_svc.create_trace_node(
+            identity_id=None, node_type="material_lot", label=lot.material_name,
+            properties={"domain": "material_lot", "domain_id": lot.lot_id},
+        )
+        if block_node:
+            await tg_svc.create_trace_edge(block_node.node_id, mat_node.node_id, "contains_material")
+    except Exception as e:
+        logger.warning(f"Trace graph update failed: {e}")
+
     event = MaterialLotCreatedEvent(
         lot_id=lot.lot_id,
         material_code=lot.material_code,
@@ -66,9 +101,11 @@ async def create_material_lot(body: CreateMaterialLotRequest):
         block_id=body.block_id or "",
     )
     try:
-        await event_bus.publish_jetstream(
-            "aeroforge.material.lot.created",
+        svc = await get_event_contract_service()
+        await svc.validate_and_publish(
+            "MaterialLotCreated",
             event.model_dump(),
+            "aeroforge.material.lot.created",
         )
     except Exception as e:
         logger.warning(f"Event publish failed: {e}")

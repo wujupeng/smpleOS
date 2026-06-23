@@ -14,6 +14,9 @@ from src.infrastructure.repositories.compliance_repository import ComplianceRepo
 from src.infrastructure.object_storage import object_storage
 from src.infrastructure.event_bus import event_bus
 from src.domain.events.evidence_uploaded_event import EvidenceUploadedEvent
+from src.infrastructure.event_contract.event_contract_service import get_event_contract_service
+from src.domain.services.identity_service import get_identity_service
+from src.domain.services.trace_graph_service import get_trace_graph_service
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +103,35 @@ async def upload_certification_evidence(
         file_size=file_size,
     )
 
+    try:
+        identity_svc = await get_identity_service()
+        await identity_svc.resolve_or_create_identity(
+            domain="evidence",
+            domain_id=evidence.evidence_id,
+            label=evidence.file_name,
+            node_type="evidence",
+            related_domain="compliance",
+            related_domain_id=requirement_id,
+        )
+    except Exception as e:
+        logger.warning(f"Identity resolution failed: {e}")
+
+    try:
+        tg_svc = await get_trace_graph_service()
+        compliance_node = tg_svc._cache.find_node_by_domain("compliance", requirement_id)
+        if compliance_node is None:
+            compliance_node = await tg_svc.create_trace_node(
+                identity_id=None, node_type="compliance", label=requirement_id,
+                properties={"domain": "compliance", "domain_id": requirement_id},
+            )
+        ev_node = await tg_svc.create_trace_node(
+            identity_id=None, node_type="evidence", label=evidence.file_name,
+            properties={"domain": "evidence", "domain_id": evidence.evidence_id},
+        )
+        await tg_svc.create_trace_edge(compliance_node.node_id, ev_node.node_id, "evidences")
+    except Exception as e:
+        logger.warning(f"Trace graph update failed: {e}")
+
     event = EvidenceUploadedEvent(
         evidence_id=evidence.evidence_id,
         requirement_id=requirement_id,
@@ -107,7 +139,8 @@ async def upload_certification_evidence(
         file_name=evidence.file_name,
     )
     try:
-        await event_bus.publish_jetstream("aeroforge.cert.evidence.uploaded", event.model_dump())
+        svc = await get_event_contract_service()
+        await svc.validate_and_publish("EvidenceUploaded", event.model_dump(), "aeroforge.cert.evidence.uploaded")
     except Exception as e:
         logger.warning(f"Event publish failed: {e}")
 

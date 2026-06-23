@@ -244,3 +244,71 @@ export interface QualityThreadResponse {
   lot_id: string
   ndt_records: NDTRecord[]
 }
+
+export interface TraceNode {
+  node_id: string
+  identity_id: string | null
+  node_type: string
+  label: string
+  properties: Record<string, unknown>
+  created_at: string | null
+}
+
+export interface TraceEdge {
+  edge_id: string
+  source_node_id: string
+  target_node_id: string
+  edge_type: string
+  properties: Record<string, unknown>
+  created_at: string | null
+}
+
+export interface TraceQueryResult {
+  nodes: TraceNode[]
+  edges: TraceEdge[]
+  truncated: boolean
+}
+
+export interface ImpactEntry {
+  node: TraceNode
+  edge_type: string
+}
+
+export interface ImpactAnalysisResult {
+  direct: ImpactEntry[]
+  indirect: ImpactEntry[]
+}
+
+export interface DependencyQueryResult {
+  dependencies: ImpactEntry[]
+}
+
+export interface TraceStatistics {
+  node_count: number
+  edge_count: number
+  node_types: Record<string, number>
+  edge_types: Record<string, number>
+  cache_nodes: number
+  cache_edges: number
+}
+
+export interface ConfigurationIdentity {
+  identity_id: string
+  canonical_label: string
+  node_type: string
+  created_at: string | null
+}
+
+export interface IdentityMapping {
+  mapping_id: string
+  identity_id: string
+  domain: string
+  domain_id: string
+  created_at: string | null
+}
+
+export interface EventContractInfo {
+  event_type: string
+  version: string
+  schema: Record<string, unknown>
+}

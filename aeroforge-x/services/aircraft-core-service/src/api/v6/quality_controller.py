@@ -14,6 +14,9 @@ from src.infrastructure.event_bus import event_bus
 from src.domain.events.ndt_completed_event import NDTCompletedEvent
 from src.domain.events.car_created_event import CARCreatedEvent
 from src.domain.events.car_closed_event import CARClosedEvent
+from src.infrastructure.event_contract.event_contract_service import get_event_contract_service
+from src.domain.services.identity_service import get_identity_service
+from src.domain.services.trace_graph_service import get_trace_graph_service
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +78,31 @@ async def create_ndt_record(body: CreateNDTRecordRequest):
         notes=body.notes,
     )
 
+    try:
+        identity_svc = await get_identity_service()
+        await identity_svc.resolve_or_create_identity(
+            domain="ndt_record",
+            domain_id=ndt.ndt_record_id,
+            label=f"NDT-{ndt.test_type}",
+            node_type="ndt_record",
+            related_domain="material_lot",
+            related_domain_id=ndt.material_lot_id,
+        )
+    except Exception as e:
+        logger.warning(f"Identity resolution failed: {e}")
+
+    try:
+        tg_svc = await get_trace_graph_service()
+        mat_node = tg_svc._cache.find_node_by_domain("material_lot", ndt.material_lot_id)
+        ndt_node = await tg_svc.create_trace_node(
+            identity_id=None, node_type="ndt_record", label=f"NDT-{ndt.test_type}",
+            properties={"domain": "ndt_record", "domain_id": str(ndt.ndt_record_id)},
+        )
+        if mat_node:
+            await tg_svc.create_trace_edge(mat_node.node_id, ndt_node.node_id, "tested_by")
+    except Exception as e:
+        logger.warning(f"Trace graph update failed: {e}")
+
     event = NDTCompletedEvent(
         ndt_record_id=ndt.ndt_record_id,
         material_lot_id=ndt.material_lot_id,
@@ -82,7 +110,8 @@ async def create_ndt_record(body: CreateNDTRecordRequest):
         result=ndt.result,
     )
     try:
-        await event_bus.publish_jetstream("aeroforge.quality.ndt.completed", event.model_dump())
+        svc = await get_event_contract_service()
+        await svc.validate_and_publish("NDTCompleted", event.model_dump(), "aeroforge.quality.ndt.completed")
     except Exception as e:
         logger.warning(f"Event publish failed: {e}")
 
@@ -116,6 +145,31 @@ async def create_car(body: CreateCARRequest):
         responsible_person=body.responsible_person,
     )
 
+    try:
+        identity_svc = await get_identity_service()
+        await identity_svc.resolve_or_create_identity(
+            domain="car",
+            domain_id=car.car_id,
+            label=car.description[:80],
+            node_type="car",
+            related_domain="ndt_record",
+            related_domain_id=car.ndt_record_id,
+        )
+    except Exception as e:
+        logger.warning(f"Identity resolution failed: {e}")
+
+    try:
+        tg_svc = await get_trace_graph_service()
+        ndt_node = tg_svc._cache.find_node_by_domain("ndt_record", str(car.ndt_record_id))
+        car_node = await tg_svc.create_trace_node(
+            identity_id=None, node_type="car", label=car.description[:80],
+            properties={"domain": "car", "domain_id": str(car.car_id)},
+        )
+        if ndt_node:
+            await tg_svc.create_trace_edge(ndt_node.node_id, car_node.node_id, "corrected_by")
+    except Exception as e:
+        logger.warning(f"Trace graph update failed: {e}")
+
     event = CARCreatedEvent(
         car_id=car.car_id,
         ndt_record_id=car.ndt_record_id,
@@ -123,7 +177,8 @@ async def create_car(body: CreateCARRequest):
         status=car.status,
     )
     try:
-        await event_bus.publish_jetstream("aeroforge.quality.car.created", event.model_dump())
+        svc = await get_event_contract_service()
+        await svc.validate_and_publish("CARCreated", event.model_dump(), "aeroforge.quality.car.created")
     except Exception as e:
         logger.warning(f"Event publish failed: {e}")
 
@@ -153,7 +208,8 @@ async def update_car(car_id: str, body: UpdateCARRequest):
             closed_by=body.closed_by or "",
         )
         try:
-            await event_bus.publish_jetstream("aeroforge.quality.car.closed", event.model_dump())
+            svc = await get_event_contract_service()
+            await svc.validate_and_publish("CARClosed", event.model_dump(), "aeroforge.quality.car.closed")
         except Exception as e:
             logger.warning(f"Event publish failed: {e}")
 

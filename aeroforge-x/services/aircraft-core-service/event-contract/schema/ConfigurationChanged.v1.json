@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ConfigurationChanged",
+  "type": "object",
+  "properties": {
+    "event_id": { "type": "string", "description": "Unique event identifier (UUID)" },
+    "event_type": { "type": "string", "const": "ConfigurationChanged", "description": "Event type discriminator" },
+    "configuration_id": { "type": "string", "description": "Configuration identifier" },
+    "block_id": { "type": "string", "description": "Block identifier" },
+    "aircraft_type": { "type": "string", "description": "Aircraft type (e.g. B737)" },
+    "change_type": { "type": "string", "enum": ["CREATED", "UPDATED", "DELETED"], "description": "Type of change" },
+    "timestamp": { "type": "string", "format": "date-time", "description": "Event timestamp (ISO 8601)" }
+  },
+  "required": ["event_id", "event_type", "configuration_id", "block_id", "aircraft_type", "change_type", "timestamp"],
+  "additionalProperties": false
+}

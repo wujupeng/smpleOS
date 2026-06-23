@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CARClosed",
+  "type": "object",
+  "properties": {
+    "event_id": { "type": "string", "description": "Unique event identifier (UUID)" },
+    "event_type": { "type": "string", "const": "CARClosed", "description": "Event type discriminator" },
+    "car_id": { "type": "string", "description": "Corrective action request identifier (UUID)" },
+    "closed_by": { "type": "string", "description": "Person who closed the CAR" },
+    "timestamp": { "type": "string", "format": "date-time", "description": "Event timestamp (ISO 8601)" }
+  },
+  "required": ["event_id", "event_type", "car_id", "closed_by", "timestamp"],
+  "additionalProperties": false
+}

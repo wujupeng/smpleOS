@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
+import os
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
 
@@ -22,11 +23,24 @@ from src.api.v6.evidence_controller import router as v6_evidence_router
 from src.api.v6.material_controller import router as v6_material_router
 from src.api.v6.quality_controller import router as v6_quality_router
 from src.api.v6.dt_certification_controller import router as v6_dt_cert_router
+from src.api.v6.event_contract_controller import router as v6_event_contract_router
+from src.api.v6.identity_controller import router as v6_identity_router
+from src.api.v6.trace_graph_controller import router as v6_trace_graph_router
+from src.infrastructure.event_contract.schema_registry import schema_registry
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await event_bus.connect()
+    schema_dir = os.environ.get('EVENT_CONTRACT_SCHEMA_DIR', '/app/event-contract/schema')
+    count = schema_registry.load_from_directory(schema_dir)
+    logging.getLogger(__name__).info(f"Loaded {count} event schemas from {schema_dir}")
+    try:
+        from src.domain.services.trace_graph_service import get_trace_graph_service
+        tg_svc = await get_trace_graph_service()
+        await tg_svc.load_cache_from_db()
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"Trace graph cache load failed: {e}")
     yield
     await event_bus.close()
     await close_connections()
@@ -62,6 +76,9 @@ app.include_router(v6_evidence_router)
 app.include_router(v6_material_router)
 app.include_router(v6_quality_router)
 app.include_router(v6_dt_cert_router)
+app.include_router(v6_event_contract_router)
+app.include_router(v6_identity_router)
+app.include_router(v6_trace_graph_router)
 
 
 @app.get("/health")
