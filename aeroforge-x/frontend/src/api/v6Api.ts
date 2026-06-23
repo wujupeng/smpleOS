@@ -202,6 +202,9 @@ export const dtHardeningApi = {
 
   getEventContract: (eventType: string) =>
     v6Client.get(`/aircraft-core/dt/event-contracts/${eventType}`),
+
+  getTraceDashboard: () =>
+    v6Client.get('/aircraft-core/dt/trace/dashboard'),
 }
 
 export default v6Client

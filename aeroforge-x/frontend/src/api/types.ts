@@ -312,3 +312,15 @@ export interface EventContractInfo {
   version: string
   schema: Record<string, unknown>
 }
+
+export interface TraceDashboard {
+  thread_coverage: number
+  total_blocks: number
+  blocks_traced: number
+  trace_depth: number
+  open_cars: number
+  total_cars: number
+  compliance_progress: number
+  total_requirements: number
+  compliant_requirements: number
+}

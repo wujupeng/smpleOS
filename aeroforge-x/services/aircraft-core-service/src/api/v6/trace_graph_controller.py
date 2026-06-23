@@ -61,6 +61,63 @@ async def get_trace_statistics():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/trace/dashboard")
+async def get_trace_dashboard():
+    try:
+        from src.infrastructure.database import get_pg_pool
+        pool = await get_pg_pool()
+
+        total_blocks = await pool.fetchval("SELECT COUNT(*) FROM block_configurations")
+        blocks_with_material = await pool.fetchval("SELECT COUNT(DISTINCT block_id) FROM dt_block_materials")
+        thread_coverage = (blocks_with_material / total_blocks * 100) if total_blocks > 0 else 0.0
+
+        max_depth = 0
+        try:
+            svc = await get_trace_graph_service()
+            nodes = await svc._node_repo.find_all(limit=10000)
+            edges = await svc._edge_repo.find_all(limit=10000)
+            adj: dict[str, list[str]] = {}
+            for e in edges:
+                adj.setdefault(e.source_node_id, []).append(e.target_node_id)
+            for n in nodes:
+                if n.node_id not in adj:
+                    continue
+                visited = {n.node_id}
+                queue = [(n.node_id, 0)]
+                while queue:
+                    cur, d = queue.pop(0)
+                    if d > max_depth:
+                        max_depth = d
+                    for nxt in adj.get(cur, []):
+                        if nxt not in visited:
+                            visited.add(nxt)
+                            queue.append((nxt, d + 1))
+        except Exception:
+            pass
+
+        open_car_count = await pool.fetchval("SELECT COUNT(*) FROM dt_corrective_actions WHERE status = 'open'")
+        total_car_count = await pool.fetchval("SELECT COUNT(*) FROM dt_corrective_actions")
+
+        total_requirements = await pool.fetchval("SELECT COUNT(*) FROM dt_compliance_requirements")
+        compliant_count = await pool.fetchval("SELECT COUNT(*) FROM dt_compliance_requirements WHERE compliance_status = 'compliant'")
+        compliance_progress = (compliant_count / total_requirements * 100) if total_requirements > 0 else 0.0
+
+        return {
+            "thread_coverage": round(thread_coverage, 1),
+            "total_blocks": total_blocks,
+            "blocks_traced": blocks_with_material or 0,
+            "trace_depth": max_depth,
+            "open_cars": open_car_count or 0,
+            "total_cars": total_car_count or 0,
+            "compliance_progress": round(compliance_progress, 1),
+            "total_requirements": total_requirements or 0,
+            "compliant_requirements": compliant_count or 0,
+        }
+    except Exception as e:
+        logger.error(f"Dashboard query failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/trace/nodes")
 async def list_trace_nodes(node_type: str = None, limit: int = 100, offset: int = 0):
     try:

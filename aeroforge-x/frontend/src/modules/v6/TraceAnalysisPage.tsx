@@ -7,6 +7,7 @@ import TraceGraphCanvas from './trace/TraceGraphCanvas'
 import TraceNodeDetailPanel from './trace/TraceNodeDetailPanel'
 import ImpactAnalysisView from './trace/ImpactAnalysisView'
 import TraceSearchBar from './trace/TraceSearchBar'
+import DigitalThreadDashboard from './trace/DigitalThreadDashboard'
 
 const TraceAnalysisPage: React.FC = () => {
   const [nodes, setNodes] = useState<TraceNode[]>([])
@@ -147,6 +148,8 @@ const TraceAnalysisPage: React.FC = () => {
 
   return (
     <div style={{ padding: 16, height: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column' }}>
+      <DigitalThreadDashboard />
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <TraceSearchBar allNodes={nodes} onNodeSelect={handleSearchNodeSelect} />
         <Space>
